@@ -1,0 +1,208 @@
+Design a complete PostgreSQL database schema for a Dietitian & Nutritionist Web App.
+
+IMPORTANT:
+This database must support:
+- Client management
+- Diet plan creation
+- Template system
+- Photo uploads (URL-based)
+- Progress tracking
+- Client lifecycle analytics
+- Staff roles and assignments
+
+DO NOT create dummy schema.
+Design production-ready structure with proper relations.
+
+==================================================
+TABLE 1: CLIENTS
+==================================================
+
+Store all client basic information.
+
+Fields:
+- id (primary key)
+- name
+- phone
+- email
+- city
+- age
+- gender
+- height
+- weight
+- goal_weight
+- lifestyle
+- medical_notes
+- diet_type (veg/non-veg)
+- assigned_dietitian_id (FK)
+- assigned_support_id (FK)
+- registration_type (online/visit)
+- created_at
+- plan_start_date
+- plan_end_date
+- last_activity_date
+- status (derived, but store for fast filtering)
+
+==================================================
+TABLE 2: DIET_PLANS
+==================================================
+
+Each client can have multiple diet plans.
+
+Fields:
+- id (primary key)
+- client_id (FK)
+- dietitian_id (FK)
+- plan_name
+- status (active/completed/draft)
+- created_at
+- updated_at
+
+==================================================
+TABLE 3: DIET_PLAN_MEALS
+==================================================
+
+Store meal sections for each plan.
+
+Fields:
+- id
+- diet_plan_id (FK)
+- meal_type (morning/breakfast/midmeal/lunch/evening/dinner/optional)
+- content (text)
+- order_index
+
+==================================================
+TABLE 4: DIET_PLAN_SECTIONS
+==================================================
+
+Left side sections (Must Do, Veg, Fruits, Water).
+
+Fields:
+- id
+- diet_plan_id (FK)
+- section_type (must_do/vegetables/fruits/water)
+- content (text)
+
+==================================================
+TABLE 5: TEMPLATES
+==================================================
+
+Used across meals, must do, instructions, vegetables, fruits.
+
+Fields:
+- id
+- category (morning/breakfast/lunch/must_do/instructions/vegetables/fruits)
+- title
+- content
+- created_at
+
+==================================================
+TABLE 6: PHOTOS
+==================================================
+
+Store client uploaded meal photos.
+
+IMPORTANT:
+Store only image URL (from Cloudinary or S3)
+
+Fields:
+- id
+- client_id (FK)
+- photo_url
+- meal_type (breakfast/lunch/dinner)
+- uploaded_at
+- remarks
+
+==================================================
+TABLE 7: PROGRESS_LOGS
+==================================================
+
+Track weight and progress.
+
+Fields:
+- id
+- client_id (FK)
+- weight
+- notes
+- created_at
+
+==================================================
+TABLE 8: PAYMENTS
+==================================================
+
+Track payments and renewals.
+
+Fields:
+- id
+- client_id (FK)
+- amount
+- payment_date
+- plan_duration_days
+- renewal_due_date
+- status (paid/pending)
+
+==================================================
+TABLE 9: STAFF
+==================================================
+
+Store dietitians and support staff.
+
+Fields:
+- id
+- name
+- phone
+- email
+- role (dietitian/support/admin)
+- status (active/inactive)
+- created_at
+
+==================================================
+RELATIONSHIPS
+==================================================
+
+- clients.id → diet_plans.client_id
+- diet_plans.id → diet_plan_meals.diet_plan_id
+- diet_plans.id → diet_plan_sections.diet_plan_id
+- clients.id → photos.client_id
+- clients.id → progress_logs.client_id
+- clients.id → payments.client_id
+- staff.id → clients.assigned_dietitian_id
+- staff.id → clients.assigned_support_id
+
+==================================================
+CLIENT STATUS LOGIC SUPPORT
+==================================================
+
+Schema must support tracking:
+
+- plan_not_started
+- completed_30_days
+- few_days_then_stopped
+- not_following_no_response
+- renewal_due
+
+Use:
+- plan_start_date
+- plan_end_date
+- last_activity_date
+
+==================================================
+IMPORTANT RULES
+==================================================
+
+- Use proper foreign keys
+- Use indexes on client_id and status fields
+- Use timestamps everywhere
+- Normalize data properly (no duplication)
+- Ensure scalability
+
+==================================================
+OUTPUT REQUIRED
+==================================================
+
+1. PostgreSQL SQL schema (CREATE TABLE statements)
+2. Proper foreign key constraints
+3. Indexes for performance
+4. Ready to run in Supabase SQL editor
+
+DO NOT include sample UI or frontend code.
+Only database schema.
