@@ -38,7 +38,7 @@ export interface Client {
   supportStaffId: string;
   status: "Active" | "Inactive" | "No Response" | "Renewal Due";
   lifecycleStatus: LifecycleStatus;
-  registrationType: "Online" | "Visit";
+  registrationType: "Online" | "Visit" | "Pune Visit";
   planType?: "Basic" | "Standard" | "Premium" | "VIP";
   progressPercent: number;
   lastUpdate: string;
@@ -110,7 +110,7 @@ export interface Appointment {
   time: string;
   clientId: string;
   dietitianId: string;
-  type: "Online" | "Visit";
+  type: "Online" | "Visit" | "Pune Visit";
   status: "Scheduled" | "Completed" | "Cancelled";
   notes?: string;
 }

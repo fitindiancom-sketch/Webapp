@@ -54,7 +54,7 @@ const EMPTY_FORM = {
   city: "",
   dietitianId: "s1",
   supportStaffId: "s2",
-  registrationType: "Online" as "Online" | "Visit",
+  registrationType: "Online" as "Online" | "Visit" | "Pune Visit",
   planType: "Standard" as "Basic" | "Standard" | "Premium" | "VIP",
 };
 
@@ -418,12 +418,13 @@ export default function Clients() {
                   <label className="text-sm font-medium">Registration Type</label>
                   <Select
                     value={form.registrationType}
-                    onValueChange={(v: "Online" | "Visit") => setForm({ ...form, registrationType: v })}
+                    onValueChange={(v: "Online" | "Visit" | "Pune Visit") => setForm({ ...form, registrationType: v })}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Online">Online</SelectItem>
                       <SelectItem value="Visit">Visit</SelectItem>
+                      <SelectItem value="Pune Visit">Pune Visit</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

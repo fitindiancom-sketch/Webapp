@@ -343,6 +343,7 @@ export default function DietPlans() {
                         <SelectItem value="all">All Types</SelectItem>
                         <SelectItem value="Online">Online</SelectItem>
                         <SelectItem value="Visit">Visit</SelectItem>
+                        <SelectItem value="Pune Visit">Pune Visit</SelectItem>
                       </SelectContent>
                     </Select>
                     <Select value={clientStatusFilter} onValueChange={setClientStatusFilter}>
