@@ -1,0 +1,245 @@
+Upgrade the existing Dietitian Web App and FIX missing core features immediately.
+
+Do NOT redesign entire app.
+Keep current UI theme/layout.
+Only enhance current system and add missing business-critical functionality.
+
+==================================================
+PRIORITY TASKS
+==================================================
+
+1. Dashboard missing custom client lifecycle metrics
+2. Clients page missing advanced status filters
+3. Diet Plan page missing template creation system
+4. Diet Plan create/save not working
+5. Diet Plan preview not working
+6. Improve frontend logic using mock state/local storage if DB not connected
+
+==================================================
+1. DASHBOARD REQUIRED FIX
+==================================================
+
+Add these exact KPI cards + widgets on Dashboard:
+
+A. Plan Taken - Not Started
+(Clients purchased plan but never started)
+
+B. Plan Taken - 30 Days Completed
+(Clients completed 30 days)
+
+C. Plan Taken - Followed Few Days Then Stopped
+
+D. Plan Taken - Not Followed + Not Responding
+
+E. Near Renewal Due (next 3 / 5 / 7 days)
+
+F. Today New Online Clients
+
+G. Today New Visit Clients
+
+H. Total Active Clients
+
+I. Total Inactive Clients
+
+J. Pending Followup Clients
+
+K. Diet Plan Due Today
+
+L. Weight Loss Success Clients
+
+Use colored cards with counts.
+
+Also create pie chart:
+Client Status Breakdown
+
+==================================================
+2. CLIENTS PAGE REQUIRED FIX
+==================================================
+
+Add top filter tabs / chips:
+
+- All Clients
+- Active
+- Inactive
+- Plan Not Started
+- 30 Days Completed
+- Followed Few Days
+- Not Responding
+- Renewal Due
+- Online Clients
+- Visit Clients
+
+Add dropdown filters:
+
+- Dietitian
+- City
+- Date Range
+- Plan Type
+
+Add search:
+
+- Name
+- Mobile
+- Client ID
+
+When clicking filter, table updates instantly.
+
+==================================================
+3. CLIENT STATUS LOGIC (MOCK)
+==================================================
+
+Use frontend mock logic for now:
+
+status values:
+
+plan_not_started
+completed_30_days
+few_days_then_stopped
+not_following_no_response
+active
+inactive
+renewal_due
+
+Use sample client data.
+
+==================================================
+4. DIET PLAN PAGE FIX
+==================================================
+
+Current page not working.
+Fix fully.
+
+Add working steps:
+
+Step 1 Select Dietitian
+Step 2 Select Client
+Step 3 Build Plan
+Step 4 Preview
+Step 5 Save
+
+==================================================
+5. TEMPLATE CREATION SYSTEM
+==================================================
+
+Add new section in Diet Plan page:
+
+"Manage Templates"
+
+Create template categories:
+
+- Morning
+- Breakfast
+- Mid Meal
+- Lunch
+- Evening
+- Dinner
+- Tea Time
+- Instructions
+
+Allow:
+
+- Add Template
+- Edit Template
+- Delete Template
+- Save Template
+
+Example:
+
+Breakfast Template:
+Oats + Fruit + Seeds
+
+Lunch Template:
+2 Roti + Sabzi + Salad
+
+Use modal popup.
+
+Templates saved in localStorage/mock state.
+
+==================================================
+6. TEMPLATE USAGE
+==================================================
+
+In diet plan builder each meal section must have:
+
+- Select Template dropdown
+- Auto fill text area
+- Editable after insert
+
+==================================================
+7. PLAN CREATE BUTTON FIX
+==================================================
+
+When clicking "Create Plan":
+
+- Validate client selected
+- Validate minimum meal sections filled
+- Save plan to local state
+- Show success toast:
+Plan Created Successfully
+
+Add generated Plan ID.
+
+==================================================
+8. PREVIEW FIX
+==================================================
+
+When clicking Preview:
+
+Open modal / side drawer with proper preview:
+
+- Logo
+- Client Name
+- Client ID
+- Dietitian Name
+- Goal Weight
+- Meal Sections
+- Must Do
+- Instructions
+
+Styled like printable PDF.
+
+==================================================
+9. SAVE DRAFT FIX
+==================================================
+
+Add Save Draft button.
+
+Stores incomplete plan in local storage.
+
+==================================================
+10. CLIENT PROFILE LINK
+==================================================
+
+After plan creation, show inside client row:
+
+Latest Plan Created
+Last Updated Date
+
+==================================================
+11. UI QUALITY
+==================================================
+
+Use polished modern UI.
+
+- Tabs
+- Chips
+- Cards
+- Toasts
+- Smooth transitions
+- Responsive tables
+- Better spacing
+
+==================================================
+12. IMPORTANT
+==================================================
+
+Do not remove any existing code.
+Only upgrade missing features.
+
+Make all buttons functional with mock logic.
+
+==================================================
+OUTPUT
+==================================================
+
+Return updated runnable code files for existing project.

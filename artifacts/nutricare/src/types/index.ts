@@ -8,20 +8,54 @@ export interface User {
   avatar?: string;
 }
 
+export type LifecycleStatus =
+  | "plan_not_started"
+  | "completed_30_days"
+  | "few_days_then_stopped"
+  | "not_following_no_response"
+  | "active"
+  | "inactive"
+  | "renewal_due";
+
+export const LIFECYCLE_LABELS: Record<LifecycleStatus, string> = {
+  plan_not_started: "Plan Not Started",
+  completed_30_days: "30 Days Completed",
+  few_days_then_stopped: "Followed Few Days",
+  not_following_no_response: "Not Responding",
+  active: "Active",
+  inactive: "Inactive",
+  renewal_due: "Renewal Due",
+};
+
 export interface Client {
   id: string;
   clientId: string;
   name: string;
   mobile: string;
+  email?: string;
   city: string;
   dietitianId: string;
   supportStaffId: string;
   status: "Active" | "Inactive" | "No Response" | "Renewal Due";
+  lifecycleStatus: LifecycleStatus;
   registrationType: "Online" | "Visit";
+  planType?: "Basic" | "Standard" | "Premium" | "VIP";
   progressPercent: number;
   lastUpdate: string;
   renewalDate: string;
+  registrationDate?: string;
+  goalWeight?: number;
+  latestPlanId?: string;
+  latestPlanDate?: string;
   avatar?: string;
+}
+
+export interface DietPlanTemplate {
+  id: string;
+  category: string;
+  name: string;
+  content: string;
+  createdAt: string;
 }
 
 export interface DashboardData {
