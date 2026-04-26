@@ -6,6 +6,7 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
+import { pool } from "@workspace/db";
 import { authStorage } from "./storage";
 
 const getOidcConfig = memoize(
@@ -21,9 +22,10 @@ const getOidcConfig = memoize(
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000;
   const pgStore = connectPg(session);
+  // Reuse the shared @workspace/db pool — it already has the correct
+  // SSL config (rejectUnauthorized: false) for Supabase's cert chain.
   const sessionStore = new pgStore({
-    conString:
-      process.env["SUPABASE_DATABASE_URL"] ?? process.env["DATABASE_URL"],
+    pool: pool as any,
     createTableIfMissing: false,
     ttl: sessionTtl,
     tableName: "sessions",

@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
+import { RequireAuth } from "@/components/RequireAuth";
 
 import Login from "./pages/login";
 import Dashboard from "./pages/dashboard";
@@ -17,26 +18,40 @@ import Reports from "./pages/reports";
 import Notifications from "./pages/notifications";
 import Settings from "./pages/settings";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: false, refetchOnWindowFocus: false },
+  },
+});
+
+function ProtectedRouter() {
+  return (
+    <RequireAuth>
+      <Switch>
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/clients" component={Clients} />
+        <Route path="/diet-plans" component={DietPlans} />
+        <Route path="/calendar" component={Calendar} />
+        <Route path="/progress" component={Progress} />
+        <Route path="/staff" component={Staff} />
+        <Route path="/payments" component={Payments} />
+        <Route path="/reports" component={Reports} />
+        <Route path="/notifications" component={Notifications} />
+        <Route path="/settings" component={Settings} />
+        <Route path="/">
+          <Redirect to="/dashboard" />
+        </Route>
+        <Route component={NotFound} />
+      </Switch>
+    </RequireAuth>
+  );
+}
 
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/clients" component={Clients} />
-      <Route path="/diet-plans" component={DietPlans} />
-      <Route path="/calendar" component={Calendar} />
-      <Route path="/progress" component={Progress} />
-      <Route path="/staff" component={Staff} />
-      <Route path="/payments" component={Payments} />
-      <Route path="/reports" component={Reports} />
-      <Route path="/notifications" component={Notifications} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/">
-        <Redirect to="/dashboard" />
-      </Route>
-      <Route component={NotFound} />
+      <Route component={ProtectedRouter} />
     </Switch>
   );
 }

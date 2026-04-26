@@ -1,11 +1,11 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { 
-  LayoutDashboard, Users, Calendar, Utensils, 
-  LineChart, Users2, CreditCard, PieChart, 
-  Bell, Settings, LogOut, Menu, Check
+import {
+  LayoutDashboard, Users, Calendar, Utensils,
+  LineChart, Users2, CreditCard, PieChart,
+  Bell, Settings, LogOut, Menu,
 } from "lucide-react";
-import { useAuthStore } from "../store/auth";
+import { useAuth } from "../hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -27,17 +27,19 @@ const NAV_ITEMS = [
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
 
+function displayName(u: { firstName: string | null; lastName: string | null; email: string | null } | null): string {
+  if (!u) return "User";
+  const full = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+  return full || u.email || "User";
+}
+
 export function AppLayout({ children }: AppLayoutProps) {
   const [location, setLocation] = useLocation();
-  const { user, logout, switchRole } = useAuthStore();
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
-  if (!user) {
-    setLocation("/login");
-    return null;
-  }
-
-  const ROLES = ["Super Admin", "Admin", "Dietitian", "Online Support", "Visit Support"] as const;
+  const name = displayName(user);
+  const avatar = user?.profileImageUrl ?? undefined;
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
@@ -72,24 +74,8 @@ export function AppLayout({ children }: AppLayoutProps) {
               {location.split('/')[1] || 'Dashboard'}
             </h1>
           </div>
-          
-          <div className="flex items-center gap-4">
-            {/* Role Switcher */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="hidden sm:flex gap-2">
-                  <span className="text-sm font-medium">{user.role}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {ROLES.map(role => (
-                  <DropdownMenuItem key={role} onClick={() => switchRole(role)} className="flex items-center justify-between">
-                    {role} {user.role === role && <Check className="h-4 w-4" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
 
+          <div className="flex items-center gap-4">
             {/* Notifications */}
             <Button variant="ghost" size="icon" className="relative" onClick={() => setLocation('/notifications')}>
               <Bell className="h-5 w-5" />
@@ -99,13 +85,26 @@ export function AppLayout({ children }: AppLayoutProps) {
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Avatar className="cursor-pointer h-9 w-9">
-                  <AvatarImage src={user.avatar} />
-                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                <Avatar className="cursor-pointer h-9 w-9" data-testid="avatar-user">
+                  <AvatarImage src={avatar} />
+                  <AvatarFallback>{name.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => { logout(); setLocation("/login"); }}>
+                <div className="px-2 py-1.5 text-sm">
+                  <div className="font-medium">{name}</div>
+                  {user?.email && (
+                    <div className="text-xs text-muted-foreground">
+                      {user.email}
+                    </div>
+                  )}
+                </div>
+                <DropdownMenuItem
+                  data-testid="button-logout"
+                  onClick={() => {
+                    window.location.href = "/api/logout";
+                  }}
+                >
                   <LogOut className="h-4 w-4 mr-2" /> Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -1,25 +1,27 @@
-import React from "react";
+import { useEffect } from "react";
 import { useLocation } from "wouter";
-import { useAuthStore } from "../store/auth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Role } from "../types";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useAuth } from "../hooks/use-auth";
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const login = useAuthStore(state => state.login);
-  const [role, setRole] = React.useState<Role>("Super Admin");
+  const { isAuthenticated, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      setLocation("/dashboard");
+    }
+  }, [isAuthenticated, isLoading, setLocation]);
 
   const handleLogin = () => {
-    login({
-      id: "demo-user",
-      name: "Demo User",
-      email: "demo@nutricare.com",
-      role,
-      avatar: "https://i.pravatar.cc/150?u=demo",
-    });
-    setLocation("/dashboard");
+    window.location.href = "/api/login";
   };
 
   return (
@@ -30,27 +32,22 @@ export default function Login() {
             <span className="text-primary font-bold text-2xl">NC</span>
           </div>
           <CardTitle className="text-2xl">Welcome to NutriCare</CardTitle>
-          <CardDescription>Select a demo role to continue</CardDescription>
+          <CardDescription>
+            Sign in with your Replit account to continue
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Demo Role</label>
-            <Select value={role} onValueChange={(val) => setRole(val as Role)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Super Admin">Super Admin</SelectItem>
-                <SelectItem value="Admin">Admin</SelectItem>
-                <SelectItem value="Dietitian">Dietitian</SelectItem>
-                <SelectItem value="Online Support">Online Support</SelectItem>
-                <SelectItem value="Visit Support">Visit Support</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button className="w-full" onClick={handleLogin}>
-            Login as {role}
+          <Button
+            className="w-full"
+            onClick={handleLogin}
+            disabled={isLoading}
+            data-testid="button-login"
+          >
+            {isLoading ? "Checking session…" : "Sign in"}
           </Button>
+          <p className="text-xs text-center text-muted-foreground">
+            You'll be redirected to Replit to authenticate, then returned here.
+          </p>
         </CardContent>
       </Card>
     </div>
