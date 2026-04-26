@@ -3,32 +3,48 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { setupAuth } from "./auth";
+import { errorHandler } from "./middlewares/error";
+import { ensureAuthTables } from "./lib/initDb";
 
-const app: Express = express();
+export async function createApp(): Promise<Express> {
+  await ensureAuthTables();
 
-app.use(
-  pinoHttp({
-    logger,
-    serializers: {
-      req(req) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url?.split("?")[0],
-        };
+  const app: Express = express();
+
+  app.use(
+    pinoHttp({
+      logger,
+      serializers: {
+        req(req) {
+          return {
+            id: req.id,
+            method: req.method,
+            url: req.url?.split("?")[0],
+          };
+        },
+        res(res) {
+          return { statusCode: res.statusCode };
+        },
       },
-      res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
-      },
-    },
-  }),
-);
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+    }),
+  );
+  app.use(
+    cors({
+      origin: true,
+      credentials: true,
+    }),
+  );
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
 
-app.use("/api", router);
+  // Auth (sessions + passport + login/logout/callback routes) must be set up
+  // before /api/* so the session middleware is available to all routes.
+  await setupAuth(app);
 
-export default app;
+  app.use("/api", router);
+
+  app.use(errorHandler);
+
+  return app;
+}
