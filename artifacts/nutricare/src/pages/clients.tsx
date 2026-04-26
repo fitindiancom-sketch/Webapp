@@ -1,18 +1,27 @@
 import React from "react";
+import { useLocation } from "wouter";
 import { AppLayout } from "../layouts/AppLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { staff } from "../mock/data";
 import { LIFECYCLE_LABELS, LifecycleStatus, Client } from "../types";
 import { useDietPlanStore } from "../store/dietPlans";
 import { useClientsStore } from "../store/clients";
 import { enrichClient } from "../lib/clientStatus";
-import { Filter, Search, X } from "lucide-react";
+import { Filter, Search, X, FileText, UserPlus, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 const FILTER_TABS: Array<{ key: "all" | LifecycleStatus | "online" | "visit"; label: string }> = [
@@ -38,12 +47,23 @@ const STATUS_BADGE: Record<LifecycleStatus, string> = {
   inactive: "bg-gray-200 text-gray-700 hover:bg-gray-200",
 };
 
+const EMPTY_FORM = {
+  name: "",
+  mobile: "",
+  email: "",
+  city: "",
+  dietitianId: "s1",
+  supportStaffId: "s2",
+  registrationType: "Online" as "Online" | "Visit",
+  planType: "Standard" as "Basic" | "Standard" | "Premium" | "VIP",
+};
+
 export default function Clients() {
+  const [, setLocation] = useLocation();
   const rawClients = useClientsStore((s) => s.clients);
   const addClientToStore = useClientsStore((s) => s.addClient);
   const { plans } = useDietPlanStore();
 
-  // Derived: every client gets its lifecycleStatus + latestPlan computed live
   const allClients = React.useMemo(
     () => rawClients.map((c) => enrichClient(c, plans)),
     [rawClients, plans]
@@ -56,20 +76,17 @@ export default function Clients() {
   const [planFilter, setPlanFilter] = React.useState<string>("all");
   const [dateFilter, setDateFilter] = React.useState<string>("all");
 
-  // form state
-  const [form, setForm] = React.useState({
-    name: "", mobile: "", email: "", city: "",
-    dietitianId: "s1", supportStaffId: "s2",
-    registrationType: "Online" as "Online" | "Visit",
-    planType: "Standard" as "Basic" | "Standard" | "Premium" | "VIP",
-  });
+  // Add Client dialog state
+  const [addOpen, setAddOpen] = React.useState(false);
+  const [phase, setPhase] = React.useState<"form" | "success">("form");
+  const [form, setForm] = React.useState(EMPTY_FORM);
+  const [justAdded, setJustAdded] = React.useState<Client | null>(null);
 
   const dietitians = staff.filter((s) => s.role === "Dietitian");
   const cities = Array.from(new Set(allClients.map((c) => c.city)));
 
   const filteredClients = React.useMemo(() => {
     return allClients.filter((c) => {
-      // tab filter
       if (activeTab !== "all") {
         if (activeTab === "online" && c.registrationType !== "Online") return false;
         if (activeTab === "visit" && c.registrationType !== "Visit") return false;
@@ -80,7 +97,6 @@ export default function Clients() {
         )
           return false;
       }
-      // search
       if (search) {
         const q = search.toLowerCase();
         const match =
@@ -104,16 +120,26 @@ export default function Clients() {
     });
   }, [allClients, activeTab, search, dietitianFilter, cityFilter, planFilter, dateFilter]);
 
-  // enrichClient already merged the latest plan info above
   const enrichedClients = filteredClients;
 
   const resetFilters = () => {
-    setActiveTab("all"); setSearch(""); setDietitianFilter("all");
-    setCityFilter("all"); setPlanFilter("all"); setDateFilter("all");
+    setActiveTab("all");
+    setSearch("");
+    setDietitianFilter("all");
+    setCityFilter("all");
+    setPlanFilter("all");
+    setDateFilter("all");
   };
 
-  const handleAddClient = () => {
-    if (!form.name || !form.mobile || !form.city) {
+  const openAddDialog = () => {
+    setForm(EMPTY_FORM);
+    setPhase("form");
+    setJustAdded(null);
+    setAddOpen(true);
+  };
+
+  const handleSaveClient = () => {
+    if (!form.name.trim() || !form.mobile.trim() || !form.city.trim()) {
       toast.error("Please fill name, mobile, and city");
       return;
     }
@@ -122,10 +148,10 @@ export default function Clients() {
     const newClient: Client = {
       id: `c${Date.now()}`,
       clientId: `NC-${nextNum}`,
-      name: form.name,
-      mobile: form.mobile,
-      email: form.email || undefined,
-      city: form.city,
+      name: form.name.trim(),
+      mobile: form.mobile.trim(),
+      email: form.email.trim() || undefined,
+      city: form.city.trim(),
       dietitianId: form.dietitianId,
       supportStaffId: form.supportStaffId,
       status: "Active",
@@ -135,14 +161,19 @@ export default function Clients() {
       progressPercent: 0,
       lastUpdate: todayIso,
       lastActivityDate: todayIso,
-      // No plan yet → planStartDate/planEndDate stay undefined → status auto-computes to "plan_not_started"
       renewalDate: new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10),
       registrationDate: todayIso,
       avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
     };
     addClientToStore(newClient);
-    setForm({ ...form, name: "", mobile: "", email: "", city: "" });
-    toast.success(`Client ${newClient.clientId} added successfully`);
+    setJustAdded(newClient);
+    setPhase("success");
+    toast.success("Client Registered Successfully");
+  };
+
+  const goCreatePlanFor = (client: Client) => {
+    setAddOpen(false);
+    setLocation(`/diet-plans?clientId=${encodeURIComponent(client.id)}`);
   };
 
   return (
@@ -155,20 +186,18 @@ export default function Clients() {
               {enrichedClients.length} of {allClients.length} clients
             </p>
           </div>
-          <Button onClick={() => document.getElementById("add-tab-trigger")?.click()}>
-            Add New Client
+          <Button onClick={openAddDialog}>
+            <UserPlus className="h-4 w-4 mr-1.5" /> Add New Client
           </Button>
         </div>
 
         <Tabs defaultValue="all" className="w-full">
           <TabsList>
             <TabsTrigger value="all">All Clients</TabsTrigger>
-            <TabsTrigger value="add" id="add-tab-trigger">Add Client</TabsTrigger>
             <TabsTrigger value="credentials">Login Credentials</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="mt-4 space-y-4">
-            {/* Filter chips */}
             <div className="flex flex-wrap gap-2">
               {FILTER_TABS.map((tab) => {
                 const active = activeTab === tab.key;
@@ -188,7 +217,6 @@ export default function Clients() {
               })}
             </div>
 
-            {/* Search + dropdown filters */}
             <Card className="p-3">
               <div className="flex flex-wrap gap-2 items-center">
                 <div className="relative flex-1 min-w-[220px]">
@@ -296,74 +324,23 @@ export default function Clients() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm">View</Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs"
+                              onClick={() => goCreatePlanFor(client)}
+                            >
+                              <FileText className="h-3.5 w-3.5 mr-1" /> Create Plan
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-7">View</Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
                   )}
                 </TableBody>
               </Table>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="add" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Add New Client</CardTitle>
-                <CardDescription>Enter client details to register them in the system.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Full Name *</label>
-                    <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. John Doe" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Mobile *</label>
-                    <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder="+91 XXXXX XXXXX" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Email</label>
-                    <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="john@example.com" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">City *</label>
-                    <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="e.g. Mumbai" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Assigned Dietitian</label>
-                    <Select value={form.dietitianId} onValueChange={(v) => setForm({ ...form, dietitianId: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {dietitians.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Registration Type</label>
-                    <Select value={form.registrationType} onValueChange={(v: "Online" | "Visit") => setForm({ ...form, registrationType: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Online">Online</SelectItem>
-                        <SelectItem value="Visit">Visit</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Plan Type</label>
-                    <Select value={form.planType} onValueChange={(v: any) => setForm({ ...form, planType: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Basic">Basic</SelectItem>
-                        <SelectItem value="Standard">Standard</SelectItem>
-                        <SelectItem value="Premium">Premium</SelectItem>
-                        <SelectItem value="VIP">VIP</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <Button className="mt-6" onClick={handleAddClient}>Save Client</Button>
-              </CardContent>
             </Card>
           </TabsContent>
 
@@ -378,6 +355,149 @@ export default function Clients() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Add Client Modal */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="max-w-2xl">
+          {phase === "form" ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-emerald-600" />
+                  Add New Client
+                </DialogTitle>
+                <DialogDescription>
+                  Enter client details to register them in the system.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Full Name *</label>
+                  <Input
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="e.g. Priya Sharma"
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Mobile *</label>
+                  <Input
+                    value={form.mobile}
+                    onChange={(e) => setForm({ ...form, mobile: e.target.value })}
+                    placeholder="+91 98765 43210"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Email</label>
+                  <Input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="priya@example.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">City *</label>
+                  <Input
+                    value={form.city}
+                    onChange={(e) => setForm({ ...form, city: e.target.value })}
+                    placeholder="e.g. Mumbai"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Assigned Dietitian</label>
+                  <Select value={form.dietitianId} onValueChange={(v) => setForm({ ...form, dietitianId: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {dietitians.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Registration Type</label>
+                  <Select
+                    value={form.registrationType}
+                    onValueChange={(v: "Online" | "Visit") => setForm({ ...form, registrationType: v })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Online">Online</SelectItem>
+                      <SelectItem value="Visit">Visit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-medium">Plan Type</label>
+                  <Select value={form.planType} onValueChange={(v: any) => setForm({ ...form, planType: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Basic">Basic</SelectItem>
+                      <SelectItem value="Standard">Standard</SelectItem>
+                      <SelectItem value="Premium">Premium</SelectItem>
+                      <SelectItem value="VIP">VIP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setAddOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveClient}>
+                  <UserPlus className="h-4 w-4 mr-1.5" /> Register Client
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-emerald-700">
+                  <CheckCircle2 className="h-5 w-5" />
+                  Client Registered Successfully
+                </DialogTitle>
+                <DialogDescription>
+                  The new client has been added to your database.
+                </DialogDescription>
+              </DialogHeader>
+              {justAdded && (
+                <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-4 my-2">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={justAdded.avatar}
+                      alt={justAdded.name}
+                      className="h-12 w-12 rounded-full object-cover"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-emerald-900">{justAdded.name}</div>
+                      <div className="text-xs text-emerald-700">
+                        {justAdded.clientId} · {justAdded.mobile} · {justAdded.city}
+                      </div>
+                      <div className="text-xs text-emerald-700 mt-0.5">
+                        {justAdded.registrationType} · {justAdded.planType} plan
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => setAddOpen(false)}>
+                  Close
+                </Button>
+                <Button variant="outline" onClick={openAddDialog}>
+                  <UserPlus className="h-4 w-4 mr-1.5" /> Add Another
+                </Button>
+                <Button
+                  onClick={() => justAdded && goCreatePlanFor(justAdded)}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                  <FileText className="h-4 w-4 mr-1.5" /> Create Diet Plan
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

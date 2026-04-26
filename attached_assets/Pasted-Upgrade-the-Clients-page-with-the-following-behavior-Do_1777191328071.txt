@@ -1,0 +1,78 @@
+Upgrade the Clients page with the following behavior.
+
+Do NOT redesign the UI.
+Only enhance functionality.
+
+==================================================
+REQUIREMENT
+==================================================
+
+1. ADD CLIENT BUTTON
+
+- When user clicks "Add Client" button:
+  → Open a modal or form immediately
+  → Form should allow entering client details
+
+==================================================
+2. CLIENT REGISTRATION FLOW
+==================================================
+
+After submitting the Add Client form:
+
+- Validate all required fields
+- Save client in state (mock data)
+- Show success message:
+  "Client Registered Successfully"
+
+==================================================
+3. SHOW CREATE DIET PLAN BUTTON
+==================================================
+
+After successful client registration:
+
+- Immediately show a button:
+  "Create Diet Plan"
+
+- This button should:
+  → Be visible inside success modal OR
+  → Redirect user to client row where button is shown
+
+==================================================
+4. CREATE DIET PLAN ACTION
+==================================================
+
+When clicking "Create Diet Plan":
+
+- Navigate to Diet Plan Builder page
+- Auto select that client
+- Skip client selection step if possible
+
+==================================================
+5. CLIENT TABLE UPDATE
+==================================================
+
+After adding client:
+
+- Client list should update instantly
+- In each client row add button:
+  "Create Diet Plan"
+
+==================================================
+6. FUNCTIONAL RULE
+==================================================
+
+- All actions must be fully functional
+- No dummy buttons
+- Use React state or Zustand
+- Use localStorage for persistence
+
+==================================================
+OUTPUT
+==================================================
+
+Return updated working code for:
+
+- Add Client modal/form
+- Registration flow
+- Create Diet Plan button
+- Navigation integration

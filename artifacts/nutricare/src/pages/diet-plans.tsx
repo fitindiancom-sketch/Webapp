@@ -107,6 +107,36 @@ export default function DietPlans() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Auto-select client from ?clientId=... query param (e.g. from Clients page)
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const cid = params.get("clientId");
+    if (!cid) return;
+    const client = useClientsStore.getState().clients.find((c) => c.id === cid);
+    if (!client) {
+      toast.error("Client not found");
+      return;
+    }
+    setClientId(client.id);
+    // Auto-pick the client's assigned dietitian if they have one available
+    const assigned = staff.find(
+      (s) => s.id === client.dietitianId && s.role === "Dietitian"
+    );
+    if (assigned) {
+      setDietitianId(assigned.id);
+      setStep(3); // Skip dietitian + client selection
+      toast.success(`Plan builder ready for ${client.name}`);
+    } else {
+      // No assigned dietitian — pre-select the client but stay on Step 1 so user picks one
+      setStep(1);
+      toast.message(`${client.name} selected — pick a dietitian to continue`);
+    }
+    setActiveView("builder");
+    // Clear the query param so a refresh doesn't keep re-triggering
+    window.history.replaceState({}, "", window.location.pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const selectedClient = clients.find((c) => c.id === clientId);
   const selectedDietitian = dietitians.find((d) => d.id === dietitianId);
 
