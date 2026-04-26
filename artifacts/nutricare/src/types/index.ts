@@ -47,6 +47,10 @@ export interface Client {
   goalWeight?: number;
   latestPlanId?: string;
   latestPlanDate?: string;
+  // Auto-status inputs (optional; computeClientStatus falls back to legacy fields)
+  planStartDate?: string;
+  planEndDate?: string;
+  lastActivityDate?: string;
   avatar?: string;
 }
 

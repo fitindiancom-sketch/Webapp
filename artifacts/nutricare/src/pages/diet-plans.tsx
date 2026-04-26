@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, Eye, Save, FileText, Plus, Pencil, Trash2, CheckCircle2, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useDietPlanStore } from "../store/dietPlans";
-import { clients, staff } from "../mock/data";
+import { useClientsStore } from "../store/clients";
+import { staff } from "../mock/data";
 import type { DietPlanTemplate } from "../types";
 
 const MEAL_SECTIONS = ["Morning", "Breakfast", "Mid Meal", "Lunch", "Evening", "Dinner", "Tea Time"];
@@ -39,6 +40,8 @@ export default function DietPlans() {
   const [previewOpen, setPreviewOpen] = React.useState(false);
 
   const { templates, plans, addTemplate, updateTemplate, deleteTemplate, savePlan, saveDraft, draft, clearDraft } = useDietPlanStore();
+  const clients = useClientsStore((s) => s.clients);
+  const attachPlan = useClientsStore((s) => s.attachPlan);
   const dietitians = staff.filter((s) => s.role === "Dietitian");
 
   // Template manager state
@@ -102,6 +105,10 @@ export default function DietPlans() {
       meals,
       status: "Published",
     });
+    // Push plan window back to the client so its auto-status flips off "Plan Not Started"
+    const startIso = newPlan.createdAt.slice(0, 10);
+    const endIso = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
+    attachPlan(clientId, startIso, endIso);
     toast.success(`Plan Created Successfully — ${newPlan.id}`);
     // reset form
     setStep(1); setDietitianId(""); setClientId(""); setMustDo(""); setInstructions("");

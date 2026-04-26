@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { clients as seedClients, staff } from "../mock/data";
+import { staff } from "../mock/data";
 import { LIFECYCLE_LABELS, LifecycleStatus, Client } from "../types";
 import { useDietPlanStore } from "../store/dietPlans";
+import { useClientsStore } from "../store/clients";
+import { enrichClient } from "../lib/clientStatus";
 import { Filter, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -37,15 +39,22 @@ const STATUS_BADGE: Record<LifecycleStatus, string> = {
 };
 
 export default function Clients() {
-  const [allClients, setAllClients] = React.useState<Client[]>(seedClients);
+  const rawClients = useClientsStore((s) => s.clients);
+  const addClientToStore = useClientsStore((s) => s.addClient);
+  const { plans } = useDietPlanStore();
+
+  // Derived: every client gets its lifecycleStatus + latestPlan computed live
+  const allClients = React.useMemo(
+    () => rawClients.map((c) => enrichClient(c, plans)),
+    [rawClients, plans]
+  );
+
   const [activeTab, setActiveTab] = React.useState<typeof FILTER_TABS[number]["key"]>("all");
   const [search, setSearch] = React.useState("");
   const [dietitianFilter, setDietitianFilter] = React.useState<string>("all");
   const [cityFilter, setCityFilter] = React.useState<string>("all");
   const [planFilter, setPlanFilter] = React.useState<string>("all");
   const [dateFilter, setDateFilter] = React.useState<string>("all");
-
-  const { plans } = useDietPlanStore();
 
   // form state
   const [form, setForm] = React.useState({
@@ -95,16 +104,8 @@ export default function Clients() {
     });
   }, [allClients, activeTab, search, dietitianFilter, cityFilter, planFilter, dateFilter]);
 
-  // Merge in latest plan info from the diet plan store
-  const enrichedClients = React.useMemo(() => {
-    return filteredClients.map((c) => {
-      const latest = plans.find((p) => p.clientId === c.id && p.status === "Published");
-      if (latest) {
-        return { ...c, latestPlanId: latest.id, latestPlanDate: latest.createdAt.slice(0, 10) };
-      }
-      return c;
-    });
-  }, [filteredClients, plans]);
+  // enrichClient already merged the latest plan info above
+  const enrichedClients = filteredClients;
 
   const resetFilters = () => {
     setActiveTab("all"); setSearch(""); setDietitianFilter("all");
@@ -117,6 +118,7 @@ export default function Clients() {
       return;
     }
     const nextNum = 10000 + allClients.length + 1;
+    const todayIso = new Date().toISOString().slice(0, 10);
     const newClient: Client = {
       id: `c${Date.now()}`,
       clientId: `NC-${nextNum}`,
@@ -131,12 +133,14 @@ export default function Clients() {
       registrationType: form.registrationType,
       planType: form.planType,
       progressPercent: 0,
-      lastUpdate: new Date().toISOString().slice(0, 10),
+      lastUpdate: todayIso,
+      lastActivityDate: todayIso,
+      // No plan yet → planStartDate/planEndDate stay undefined → status auto-computes to "plan_not_started"
       renewalDate: new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10),
-      registrationDate: new Date().toISOString().slice(0, 10),
+      registrationDate: todayIso,
       avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
     };
-    setAllClients((prev) => [newClient, ...prev]);
+    addClientToStore(newClient);
     setForm({ ...form, name: "", mobile: "", email: "", city: "" });
     toast.success(`Client ${newClient.clientId} added successfully`);
   };

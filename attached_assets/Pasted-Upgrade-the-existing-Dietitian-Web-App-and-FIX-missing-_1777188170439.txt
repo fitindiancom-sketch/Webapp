@@ -1,0 +1,128 @@
+Upgrade the existing Dietitian Web App and FIX missing core features immediately.
+
+Do NOT redesign entire app.
+Keep current UI theme/layout.
+Only enhance current system and add missing business-critical functionality.
+
+==================================================
+CORE IMPLEMENTATION LOGIC (IMPORTANT)
+==================================================
+
+Use React state or Zustand as central store for:
+
+- clients
+- dietPlans
+- templates
+- drafts
+
+Create structured data models:
+
+Client:
+{
+ id,
+ name,
+ phone,
+ status,
+ dietitian,
+ city,
+ createdAt,
+ planStartDate,
+ planEndDate
+}
+
+DietPlan:
+{
+ id,
+ clientId,
+ meals,
+ createdAt,
+ status
+}
+
+Template:
+{
+ id,
+ category,
+ title,
+ content
+}
+
+==================================================
+DATA HANDLING
+==================================================
+
+- Store templates, diet plans and drafts in localStorage
+- Sync state with localStorage on every create/update
+- Use unique IDs (timestamp or uuid)
+
+==================================================
+CLIENT STATUS LOGIC (MANDATORY)
+==================================================
+
+Auto compute client status based on data:
+
+- plan_not_started → plan created but no activity
+- completed_30_days → planEndDate reached
+- few_days_then_stopped → activity stopped mid plan
+- not_following_no_response → no updates for X days
+- renewal_due → planEndDate within 3–7 days
+
+==================================================
+FUNCTIONAL REQUIREMENTS
+==================================================
+
+1. Dashboard:
+- Compute all KPI counts from client data
+- Use derived state (not static values)
+
+2. Clients Page:
+- Apply filters on client array using status
+- Filters must update UI instantly
+
+3. Diet Plan Builder:
+- Fully working multi-step flow:
+  Select Dietitian → Select Client → Build → Preview → Save
+
+4. Template System:
+- CRUD templates (Add/Edit/Delete)
+- Save in localStorage
+- Dropdown selection auto fills meal fields
+
+5. Plan Creation:
+- Validate inputs
+- Save plan in state
+- Link plan to clientId
+- Show success toast
+
+6. Preview:
+- Render full structured diet plan in modal
+- Use real data (not placeholder)
+
+7. Draft:
+- Save incomplete plan in localStorage
+- Load draft when returning
+
+==================================================
+UI FUNCTIONALITY RULE
+==================================================
+
+NO BUTTON SHOULD BE DUMMY.
+
+All actions must:
+- update state
+- reflect in UI immediately
+
+==================================================
+IMPORTANT
+==================================================
+
+- Do NOT break existing layout or routing
+- Modify existing components only where required
+- Ensure code is reusable and clean
+- Avoid redundant state duplication
+
+==================================================
+OUTPUT
+==================================================
+
+Return updated runnable code with all features functional using mock state + localStorage.

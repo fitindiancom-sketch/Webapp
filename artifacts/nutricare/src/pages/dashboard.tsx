@@ -9,11 +9,14 @@ import {
   Users, Activity, TrendingUp, Calendar as CalendarIcon, AlertCircle, CheckCircle2,
   PauseCircle, UserPlus, UserCheck, ClockAlert, ClipboardList, Award, PhoneOff, PlayCircle
 } from "lucide-react";
-import { clients } from "../mock/data";
-import { LIFECYCLE_LABELS, LifecycleStatus } from "../types";
+import { useClientsStore } from "../store/clients";
+import { useDietPlanStore } from "../store/dietPlans";
+import { enrichClient } from "../lib/clientStatus";
+import { LIFECYCLE_LABELS, LifecycleStatus, Client } from "../types";
 
 const today = new Date();
-const inDays = (dateStr: string) => {
+const inDays = (dateStr?: string) => {
+  if (!dateStr) return Number.POSITIVE_INFINITY;
   const d = new Date(dateStr);
   return Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 };
@@ -22,11 +25,11 @@ const isToday = (dateStr?: string) => {
   return new Date(dateStr).toDateString() === today.toDateString();
 };
 
-function computeKpis() {
+function computeKpis(clients: Client[]) {
   const byStatus = (s: LifecycleStatus) => clients.filter((c) => c.lifecycleStatus === s).length;
   const renewalIn = (n: number) =>
     clients.filter((c) => {
-      const days = inDays(c.renewalDate);
+      const days = inDays(c.planEndDate ?? c.renewalDate);
       return days >= 0 && days <= n;
     }).length;
 
@@ -104,7 +107,17 @@ function KpiCard({
 }
 
 export default function Dashboard() {
-  const kpis = React.useMemo(() => computeKpis(), []);
+  const rawClients = useClientsStore((s) => s.clients);
+  const plans = useDietPlanStore((s) => s.plans);
+
+  // Derived state: every client gets its lifecycleStatus auto-computed from
+  // plan dates + last activity. Filtering/KPIs stay in sync with edits live.
+  const clients = React.useMemo(
+    () => rawClients.map((c) => enrichClient(c, plans)),
+    [rawClients, plans]
+  );
+
+  const kpis = React.useMemo(() => computeKpis(clients), [clients]);
 
   const statusBreakdown = React.useMemo(() => {
     const map: Record<string, number> = {};
@@ -116,7 +129,7 @@ export default function Dashboard() {
       value: v,
       key: k,
     }));
-  }, []);
+  }, [clients]);
 
   return (
     <AppLayout>
