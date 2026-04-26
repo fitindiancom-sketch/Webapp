@@ -1,0 +1,134 @@
+You are given a reference Diet Plan PDF file (uploaded).
+
+FIRST TASK:
+Analyze the uploaded PDF carefully and understand:
+
+- Page layout structure
+- Section placement (left/right alignment)
+- Spacing, margins, typography
+- Meal section formatting
+- Lists and instructions formatting
+
+==================================================
+GOAL
+==================================================
+
+Recreate the EXACT SAME PDF design and structure dynamically.
+
+The generated PDF must visually match the reference file.
+
+DO NOT change layout or redesign anything.
+
+==================================================
+PDF STRUCTURE
+==================================================
+
+PAGE 1:
+- Logo
+- Client Name
+- Client ID
+- Dietitian Name
+- Weight / Goal
+
+PAGE 2:
+
+LEFT SIDE:
+- Must Do
+- Vegetable List
+- Fruits List
+- Water Intake
+
+RIGHT SIDE:
+- Morning
+- Breakfast
+- Mid Meal
+- Lunch
+- Evening
+- Dinner
+- Optional Section
+
+PAGE 3:
+- Instructions (long format)
+
+==================================================
+MANDATORY FEATURE ADDITIONS (IMPORTANT)
+==================================================
+
+1. MUST DO SECTION:
+- Editable text area
+- Add Template feature
+- Select Template dropdown
+- Ability to create/edit/delete templates
+
+2. INSTRUCTIONS SECTION:
+- Editable
+- Template system enabled
+- Multiple instruction templates selectable
+
+3. VEGETABLE LIST:
+- Fully editable list
+- Template support (predefined vegetable sets)
+- Ability to modify and save
+
+4. FRUITS LIST:
+- Editable
+- Template support
+- Custom additions allowed
+
+==================================================
+TEMPLATE SYSTEM RULE
+==================================================
+
+For all template-enabled sections:
+
+- Must have:
+  Add Template
+  Edit Template
+  Delete Template
+  Select Template
+
+- Templates stored in localStorage
+
+==================================================
+DIET PLAN BUILDER INTEGRATION
+==================================================
+
+While creating diet plan:
+
+- User must be able to:
+  Select templates
+  Modify content
+  Save final plan
+
+==================================================
+PDF GENERATION
+==================================================
+
+- Replace static content with dynamic data
+- Use same layout as reference PDF
+- Ensure left/right structure remains exact
+
+==================================================
+PREVIEW
+==================================================
+
+- Show preview before download
+- Preview must match final PDF exactly
+
+==================================================
+IMPORTANT RULE
+==================================================
+
+STRICTLY follow uploaded PDF design.
+
+DO NOT generate a new design.
+
+==================================================
+OUTPUT
+==================================================
+
+- Working PDF generator
+- Template system integrated
+- Editable sections working
+- Preview working
+- Layout matching reference

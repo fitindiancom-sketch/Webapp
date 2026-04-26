@@ -1,0 +1,119 @@
+You are given a reference Diet Plan PDF file.
+
+IMPORTANT:
+First deeply analyze the uploaded PDF file and understand:
+
+- Page structure
+- Layout alignment
+- Sections positioning
+- Typography (headings, spacing, formatting)
+- Left and right column structure
+- How meals, instructions and lists are arranged
+- How client details and branding are shown
+
+==================================================
+GOAL
+==================================================
+
+Recreate the EXACT SAME PDF design and structure dynamically inside the web app.
+
+The generated PDF must visually match the uploaded reference.
+
+==================================================
+PDF STRUCTURE REQUIREMENTS
+==================================================
+
+1. Page 1 (Cover Page):
+- Logo at top
+- Client Name
+- Client ID
+- Dietitian Name
+- Weight / Goal details
+- Clean professional layout
+
+2. Page 2 (Diet Plan Layout):
+
+LEFT SIDE (Vertical Section):
+- Must Do List
+- Vegetable List
+- Fruits List
+- Water Intake
+
+RIGHT SIDE:
+Meal Sections:
+
+- Morning
+- Breakfast
+- Mid Meal
+- Lunch
+- Evening Snack
+- Dinner
+- Optional Section (Tea / Snacks)
+
+Each meal section must:
+- Support multiple options
+- Be cleanly spaced
+- Follow same alignment as reference PDF
+
+3. Page 3 (Instructions Page):
+- Long list of common instructions
+- Proper spacing and readability
+- Bullet or paragraph format as per reference
+
+==================================================
+DESIGN RULES
+==================================================
+
+- Match spacing, padding, margins exactly
+- Maintain same column structure (left/right)
+- Maintain same font hierarchy (heading vs content)
+- Maintain same alignment (center/left)
+- Keep layout clean and printable
+
+==================================================
+DYNAMIC DATA INJECTION
+==================================================
+
+Replace static content with dynamic data:
+
+- Client Name
+- Client ID
+- Dietitian Name
+- Meals content
+- Instructions
+- Must Do / Veg / Fruits list
+
+==================================================
+TECH IMPLEMENTATION
+==================================================
+
+- Use a PDF generation library (React PDF / jsPDF / HTML to PDF)
+- Create reusable layout components
+- Ensure PDF looks identical to UI preview
+
+==================================================
+PREVIEW FEATURE
+==================================================
+
+Before downloading PDF:
+- Show exact preview in modal
+- Preview must match final PDF output
+
+==================================================
+IMPORTANT
+==================================================
+
+DO NOT create a random design.
+
+STRICTLY follow uploaded reference PDF layout.
+
+Pixel-level similarity is required.
+
+==================================================
+OUTPUT
+==================================================
+
+- Working PDF generation code
+- Preview working
+- Download working
+- Layout matching reference PDF

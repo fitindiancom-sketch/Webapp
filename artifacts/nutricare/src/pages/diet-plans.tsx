@@ -8,12 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, Eye, Save, FileText, Plus, Pencil, Trash2, CheckCircle2, Printer } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, Save, FileText, Plus, Pencil, Trash2, CheckCircle2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useDietPlanStore } from "../store/dietPlans";
 import { useClientsStore } from "../store/clients";
 import { staff } from "../mock/data";
 import type { DietPlanTemplate } from "../types";
+import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
+import { DietPlanPDF } from "../components/DietPlanPDF";
 
 const MEAL_SECTIONS = ["Morning", "Breakfast", "Mid Meal", "Lunch", "Evening", "Dinner", "Tea Time"];
 const TEMPLATE_CATEGORIES = ["Morning", "Breakfast", "Mid Meal", "Lunch", "Evening", "Dinner", "Tea Time", "Instructions"];
@@ -521,14 +523,38 @@ export default function DietPlans() {
                 ) : (
                   <div className="space-y-2">
                     {plans.map((p) => (
-                      <div key={p.id} className="flex items-center justify-between border rounded-lg p-3 text-sm hover:bg-muted/30">
-                        <div>
-                          <div className="font-medium">{p.clientName} <span className="text-muted-foreground font-normal">— {p.clientCode}</span></div>
-                          <div className="text-xs text-muted-foreground">
+                      <div key={p.id} className="flex items-center justify-between border rounded-lg p-3 text-sm hover:bg-muted/30 gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium truncate">{p.clientName} <span className="text-muted-foreground font-normal">— {p.clientCode}</span></div>
+                          <div className="text-xs text-muted-foreground truncate">
                             {p.id} · {p.dietitianName} · {new Date(p.createdAt).toLocaleString()}
                           </div>
                         </div>
                         <Badge>{p.status}</Badge>
+                        <PDFDownloadLink
+                          document={
+                            <DietPlanPDF
+                              clientName={p.clientName}
+                              clientCode={p.clientCode}
+                              dietitianName={p.dietitianName}
+                              goalWeight={p.goalWeight}
+                              category={p.category}
+                              waterGoal={p.waterGoal}
+                              mustDo={p.mustDo}
+                              instructions={p.instructions}
+                              meals={p.meals}
+                              createdAt={p.createdAt}
+                            />
+                          }
+                          fileName={`NutriCare_${p.clientName.replace(/\s+/g, "_")}_${p.id}.pdf`}
+                        >
+                          {({ loading }) => (
+                            <Button size="sm" variant="outline" disabled={loading}>
+                              <Download className="h-3.5 w-3.5 mr-1" />
+                              {loading ? "..." : "PDF"}
+                            </Button>
+                          )}
+                        </PDFDownloadLink>
                       </div>
                     ))}
                   </div>
@@ -538,63 +564,71 @@ export default function DietPlans() {
           </TabsContent>
         </Tabs>
 
-        {/* ===== PREVIEW DIALOG ===== */}
+        {/* ===== PREVIEW DIALOG (PDF live preview + download) ===== */}
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <div className="flex items-center justify-between">
+          <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-4">
+            <DialogHeader className="shrink-0">
+              <div className="flex items-center justify-between gap-4">
                 <div>
-                  <DialogTitle className="text-xl">NutriCare Diet Plan</DialogTitle>
-                  <DialogDescription>Printable preview</DialogDescription>
+                  <DialogTitle className="text-xl">PDF Preview</DialogTitle>
+                  <DialogDescription>
+                    Exact preview of the downloadable PDF — Cover · Diet Plan · Instructions
+                  </DialogDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => window.print()}>
-                  <Printer className="h-4 w-4 mr-1" /> Print
-                </Button>
+                {previewOpen && (
+                  <PDFDownloadLink
+                    document={
+                      <DietPlanPDF
+                        clientName={selectedClient?.name ?? ""}
+                        clientCode={selectedClient?.clientId ?? ""}
+                        dietitianName={selectedDietitian?.name ?? ""}
+                        goalWeight={goalWeight}
+                        currentWeight={selectedClient?.goalWeight?.toString()}
+                        category={category}
+                        waterGoal={waterGoal}
+                        mustDo={mustDo}
+                        instructions={instructions}
+                        meals={meals}
+                        clientCity={selectedClient?.city}
+                        clientMobile={selectedClient?.mobile}
+                      />
+                    }
+                    fileName={`NutriCare_${(selectedClient?.name || "Plan").replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`}
+                  >
+                    {({ loading }) => (
+                      <Button size="sm" disabled={loading}>
+                        <Download className="h-4 w-4 mr-1" />
+                        {loading ? "Preparing PDF..." : "Download PDF"}
+                      </Button>
+                    )}
+                  </PDFDownloadLink>
+                )}
               </div>
             </DialogHeader>
-            <div className="space-y-4 print:p-6">
-              <div className="border-b pb-3 flex items-center justify-between">
-                <div className="text-2xl font-bold text-primary">NutriCare</div>
-                <div className="text-xs text-muted-foreground text-right">
-                  Plan Date: {new Date().toLocaleDateString()}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground">Client Name:</span> <span className="font-medium">{selectedClient?.name || "—"}</span></div>
-                <div><span className="text-muted-foreground">Client ID:</span> <span className="font-medium">{selectedClient?.clientId || "—"}</span></div>
-                <div><span className="text-muted-foreground">Dietitian:</span> <span className="font-medium">{selectedDietitian?.name || "—"}</span></div>
-                <div><span className="text-muted-foreground">Goal Weight:</span> <span className="font-medium">{goalWeight || "—"} kg</span></div>
-                <div><span className="text-muted-foreground">Water Goal:</span> <span className="font-medium">{waterGoal} L/day</span></div>
-                <div><span className="text-muted-foreground">Plan Type:</span> <span className="font-medium">{category}</span></div>
-              </div>
 
-              {mustDo && (
-                <div>
-                  <h4 className="font-semibold text-sm mb-1">Must Do</h4>
-                  <p className="text-sm text-muted-foreground whitespace-pre-line bg-muted/30 p-3 rounded">{mustDo}</p>
-                </div>
-              )}
-
-              <div>
-                <h4 className="font-semibold text-sm mb-2">Meal Plan</h4>
-                <div className="space-y-2">
-                  {meals.filter((m) => m.content).length === 0 && (
-                    <p className="text-sm text-muted-foreground">No meal sections filled.</p>
-                  )}
-                  {meals.filter((m) => m.content).map((m) => (
-                    <div key={m.type} className="border rounded p-3">
-                      <div className="font-medium text-sm mb-1">{m.type}</div>
-                      <p className="text-sm text-muted-foreground whitespace-pre-line">{m.content}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {instructions && (
-                <div>
-                  <h4 className="font-semibold text-sm mb-1">Instructions</h4>
-                  <p className="text-sm text-muted-foreground whitespace-pre-line bg-muted/30 p-3 rounded">{instructions}</p>
-                </div>
+            <div className="flex-1 min-h-0 border rounded overflow-hidden bg-muted/30">
+              {previewOpen && (
+                <PDFViewer
+                  width="100%"
+                  height="100%"
+                  showToolbar={false}
+                  style={{ border: "none" }}
+                >
+                  <DietPlanPDF
+                    clientName={selectedClient?.name ?? ""}
+                    clientCode={selectedClient?.clientId ?? ""}
+                    dietitianName={selectedDietitian?.name ?? ""}
+                    goalWeight={goalWeight}
+                    currentWeight={selectedClient?.goalWeight?.toString()}
+                    category={category}
+                    waterGoal={waterGoal}
+                    mustDo={mustDo}
+                    instructions={instructions}
+                    meals={meals}
+                    clientCity={selectedClient?.city}
+                    clientMobile={selectedClient?.mobile}
+                  />
+                </PDFViewer>
               )}
             </div>
           </DialogContent>
