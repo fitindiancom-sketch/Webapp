@@ -1,0 +1,525 @@
+Build a COMPLETE production-grade Dietitian & Nutritionist Web App (UI FIRST PHASE) with FULL frontend functionality, backend-ready architecture, API-ready structure, reusable components, role-based flows, and future database integration support.
+
+IMPORTANT:
+This phase is UI + Functional Logic + Backend Skeleton only.
+DO NOT fully implement database now.
+Use mock/local state/sample JSON data where needed.
+But every page, form, module, flow and action must be ready to connect with PostgreSQL later.
+
+==================================================
+CORE GOAL
+==================================================
+
+Create an enterprise web app for nutrition business where Super Admin, Admin, Dietitians, and Support Staff can manage clients, appointments, diet plans, progress, photos, payments, renewals and analytics.
+
+Later this same system will connect to mobile apps.
+
+==================================================
+TECH STACK
+==================================================
+
+Use:
+
+- React / Next.js
+- TypeScript
+- Tailwind CSS
+- ShadCN UI
+- Zustand / Context
+- React Query
+- Form validation
+- Clean modular folder structure
+
+==================================================
+IMPORTANT PHASE RULE
+==================================================
+
+Database later connect hoga.
+
+Abhi build:
+
+- Beautiful UI
+- Full pages
+- Working frontend logic
+- Forms
+- Search
+- Filters
+- Role based menus
+- Mock APIs
+- State flows
+- Upload placeholders
+- PDF preview placeholders
+- Charts with dummy data
+- Notification UI
+- Realtime ready architecture
+
+==================================================
+ROLES
+==================================================
+
+1. Super Admin
+2. Admin
+3. Dietitian
+4. Online Support Staff
+5. Visit Support Staff
+
+Each role gets separate dashboard access.
+
+==================================================
+MAIN WEB APP PAGES
+==================================================
+
+1. Dashboard
+2. Clients
+3. Calendar
+4. Diet Plan Builder
+5. Client Progress & Photos
+6. Staff Management
+7. Payments & Renewals
+8. Reports & Analytics
+9. Notifications
+10. Settings
+
+==================================================
+1. DASHBOARD PAGE
+==================================================
+
+Create modern SaaS dashboard.
+
+Show KPI cards:
+
+- Total Clients
+- Active Clients
+- Inactive Clients
+- Today New Registrations
+- Online Clients Today
+- Visit Clients Today
+- Near Renewal Clients
+- Near Due Diet Plans
+- Clients Started Plan
+- Clients Not Started
+- No Response Clients
+- 30 Days Completed Clients
+- Weight Loss Success %
+- Revenue This Month
+- Pending Followups
+
+Charts:
+
+- Monthly registrations
+- Revenue graph
+- Weight loss trend
+- Dietitian performance
+- Support staff performance
+
+Filters:
+
+- Today
+- Week
+- Month
+- Custom Date
+- Online / Visit
+- Dietitian wise
+- City wise
+
+==================================================
+2. CLIENT MANAGEMENT PAGE
+==================================================
+
+Tabs:
+
+- Add Client
+- All Clients
+- Login Credentials
+- Progress Timeline
+- Files & Photos
+
+Add Client Form:
+
+- Full Name
+- Gender
+- Age
+- Height
+- Weight
+- Goal Weight
+- Mobile
+- Email
+- City
+- Occupation
+- Lifestyle
+- Veg / Nonveg
+- Medical Notes
+- Allergies
+- Budget
+- Registration Type
+- Assigned Dietitian
+- Assigned Support Staff
+
+On Save:
+
+- Auto generate Client ID
+- Auto generate Username
+- Auto generate Password
+- Show success modal
+
+All Clients Table:
+
+Columns:
+
+- Name
+- Client ID
+- Mobile
+- Dietitian
+- Status
+- Last Update
+- Renewal Date
+- Progress %
+- Actions
+
+Actions:
+
+- View Profile
+- Edit
+- Make Diet Plan
+- Open Progress
+- Upload File
+- History
+
+Search:
+
+- Name
+- Mobile
+- Client ID
+- City
+
+==================================================
+3. CALENDAR PAGE
+==================================================
+
+Professional calendar UI.
+
+Show:
+
+- Today Appointments
+- Pending
+- Completed
+- Cancelled
+- Online Consultations
+- Visit Consultations
+
+Features:
+
+- Add Appointment modal
+- Edit
+- Drag Drop ready UI
+- Assign Dietitian
+- Notes
+
+==================================================
+4. DIET PLAN BUILDER PAGE
+==================================================
+
+Multi step builder.
+
+Step 1:
+Select Dietitian
+
+Step 2:
+Search Client
+
+By:
+
+- Name
+- Mobile
+- Client ID
+
+Step 3:
+Choose Category
+
+- New Client
+- Active
+- Restart
+- Renewal
+- No Response
+
+Step 4:
+Build Diet Plan
+
+Sections:
+
+LEFT SIDE:
+
+- Must Do
+- Vegetables
+- Fruits
+- Water Goal
+
+RIGHT SIDE Editable Meals:
+
+- Morning
+- Breakfast
+- Mid Meal
+- Lunch
+- Evening
+- Dinner
+- Optional Tea
+- Cheat Meal
+
+Templates dropdown in each section.
+
+Buttons:
+
+- Save Draft
+- Preview
+- Generate PDF
+- Share
+
+==================================================
+5. CLIENT PROGRESS & PHOTOS PAGE
+==================================================
+
+VERY IMPORTANT.
+
+Client wise progress center.
+
+Show timeline:
+
+- Weight logs
+- Measurements
+- Progress notes
+- Meal compliance
+- Photos uploaded
+
+Photo Module:
+
+Client future mobile app se daily 3 meal photos upload karega.
+
+Abhi web app me support ready UI banao:
+
+Upload sections:
+
+- Breakfast Photo
+- Lunch Photo
+- Dinner Photo
+
+Store in mock data now.
+
+Show:
+
+- Date wise gallery
+- Before After compare
+- Notes by support team
+- Flag if no upload
+
+Progress charts:
+
+- Weight graph
+- Inches graph
+- Consistency score
+
+==================================================
+6. STAFF MANAGEMENT PAGE
+==================================================
+
+Add/manage staff.
+
+Fields:
+
+- Name
+- Mobile
+- Email
+- Role
+- Department
+- Status
+- Join Date
+
+Roles:
+
+- Dietitian
+- Online Support
+- Visit Support
+- Admin
+
+Permissions UI:
+
+Checkbox based:
+
+- View Clients
+- Edit Clients
+- Make Diet Plan
+- View Payments
+- View Reports
+- Manage Staff
+
+==================================================
+7. PAYMENTS & RENEWALS PAGE
+==================================================
+
+Show tables:
+
+- Paid
+- Pending
+- Partial
+- Renewal Due
+- Expired Plans
+
+Client rows:
+
+- Name
+- Amount
+- Plan Type
+- Paid Date
+- Renewal Date
+- Status
+
+Actions:
+
+- Mark Paid
+- Send Reminder
+- Extend Plan
+
+==================================================
+8. REPORTS & ANALYTICS PAGE
+==================================================
+
+Charts:
+
+- Client growth
+- Revenue monthly
+- Dietitian output
+- Support response rate
+- Client retention
+- Drop off rate
+- Weight loss success
+
+Export buttons:
+
+- PDF
+- CSV
+- Excel
+
+==================================================
+9. NOTIFICATION PAGE
+==================================================
+
+Notification center UI.
+
+Types:
+
+- Renewal reminder
+- No response client
+- Appointment reminder
+- New registration
+- Progress milestone
+
+==================================================
+10. SETTINGS PAGE
+==================================================
+
+Tabs:
+
+- Branding
+- Logo Upload
+- Roles
+- Theme
+- Notification Templates
+- WhatsApp Templates
+- PDF Templates
+
+==================================================
+BACKEND READY STRUCTURE (NO DB YET)
+==================================================
+
+Create folders:
+
+/api
+/services
+/hooks
+/store
+/types
+/components
+/modules
+
+Mock APIs:
+
+/api/clients
+/api/staff
+/api/payments
+/api/dietplans
+/api/progress
+/api/photos
+/api/dashboard
+
+Use fake JSON responses now.
+
+==================================================
+PHOTO SYSTEM (IMPORTANT)
+==================================================
+
+Prepare future storage architecture:
+
+Each photo object:
+
+- clientId
+- date
+- mealType
+- photoUrl
+- uploadedBy
+- remarks
+
+Show complete UI in web app now.
+
+==================================================
+ROLE BASED LOGIC
+==================================================
+
+Super Admin:
+All access
+
+Dietitian:
+Own clients only
+
+Support:
+Assigned clients only
+
+Admin:
+Most management access
+
+==================================================
+UI DESIGN
+==================================================
+
+Premium modern SaaS.
+
+Theme:
+
+White + Emerald + Gray
+
+Sidebar layout
+Smooth animation
+Responsive desktop first
+Cards
+Tables
+Modals
+Drawers
+Search bars
+
+==================================================
+DELIVERABLE
+==================================================
+
+Generate complete runnable web app code with:
+
+- All pages
+- Navigation
+- Functional forms
+- Search
+- Filters
+- Mock backend logic
+- Role system
+- Charts
+- Upload UI
+- Photo progress system
+- Diet builder
+- Payment module
+
+Everything should be coded cleanly so PostgreSQL + real backend can be connected later easily.
