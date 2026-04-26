@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, Eye, Save, FileText, Plus, Pencil, Trash2, CheckCircle2, Download } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, Save, FileText, Plus, Pencil, Trash2, CheckCircle2, Download, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { useDietPlanStore } from "../store/dietPlans";
 import { useClientsStore } from "../store/clients";
@@ -45,6 +45,41 @@ export default function DietPlans() {
   const clients = useClientsStore((s) => s.clients);
   const attachPlan = useClientsStore((s) => s.attachPlan);
   const dietitians = staff.filter((s) => s.role === "Dietitian");
+
+  // Step 2: client search/filter state
+  const [clientSearch, setClientSearch] = React.useState("");
+  const [clientCityFilter, setClientCityFilter] = React.useState<string>("all");
+  const [clientPlanFilter, setClientPlanFilter] = React.useState<string>("all");
+  const [clientTypeFilter, setClientTypeFilter] = React.useState<string>("all");
+  const [clientStatusFilter, setClientStatusFilter] = React.useState<string>("all");
+
+  const cityOptions = React.useMemo(
+    () => Array.from(new Set(clients.map((c) => c.city))).sort(),
+    [clients]
+  );
+
+  const matchedClients = React.useMemo(() => {
+    const q = clientSearch.trim().toLowerCase();
+    return clients.filter((c) => {
+      if (q) {
+        const hay = `${c.name} ${c.clientId} ${c.id} ${c.mobile} ${c.email ?? ""} ${c.city}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (clientCityFilter !== "all" && c.city !== clientCityFilter) return false;
+      if (clientPlanFilter !== "all" && c.planType !== clientPlanFilter) return false;
+      if (clientTypeFilter !== "all" && c.registrationType !== clientTypeFilter) return false;
+      if (clientStatusFilter !== "all" && c.status !== clientStatusFilter) return false;
+      return true;
+    });
+  }, [clients, clientSearch, clientCityFilter, clientPlanFilter, clientTypeFilter, clientStatusFilter]);
+
+  const resetClientFilters = () => {
+    setClientSearch("");
+    setClientCityFilter("all");
+    setClientPlanFilter("all");
+    setClientTypeFilter("all");
+    setClientStatusFilter("all");
+  };
 
   // Template manager state
   const [tplDialogOpen, setTplDialogOpen] = React.useState(false);
@@ -236,30 +271,129 @@ export default function DietPlans() {
               <Card>
                 <CardHeader>
                   <CardTitle>Step 2: Select Client</CardTitle>
-                  <CardDescription>Search by name, mobile or client ID, then pick.</CardDescription>
+                  <CardDescription>
+                    Search by name, client ID, mobile or email, and filter by city, plan, type or status.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Select value={clientId} onValueChange={setClientId}>
-                    <SelectTrigger className="max-w-md"><SelectValue placeholder="Choose a client" /></SelectTrigger>
-                    <SelectContent>
-                      {clients.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name} — {c.clientId} ({c.city})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {/* Search + filters */}
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <div className="relative flex-1 min-w-[260px]">
+                      <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+                      <Input
+                        value={clientSearch}
+                        onChange={(e) => setClientSearch(e.target.value)}
+                        placeholder="Search name, client ID, mobile, email..."
+                        className="pl-8"
+                        autoFocus
+                      />
+                    </div>
+                    <Select value={clientCityFilter} onValueChange={setClientCityFilter}>
+                      <SelectTrigger className="w-[150px]"><SelectValue placeholder="City" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Cities</SelectItem>
+                        {cityOptions.map((city) => (
+                          <SelectItem key={city} value={city}>{city}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={clientPlanFilter} onValueChange={setClientPlanFilter}>
+                      <SelectTrigger className="w-[140px]"><SelectValue placeholder="Plan Type" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Plans</SelectItem>
+                        <SelectItem value="Basic">Basic</SelectItem>
+                        <SelectItem value="Standard">Standard</SelectItem>
+                        <SelectItem value="Premium">Premium</SelectItem>
+                        <SelectItem value="VIP">VIP</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={clientTypeFilter} onValueChange={setClientTypeFilter}>
+                      <SelectTrigger className="w-[130px]"><SelectValue placeholder="Type" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="Online">Online</SelectItem>
+                        <SelectItem value="Visit">Visit</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={clientStatusFilter} onValueChange={setClientStatusFilter}>
+                      <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Inactive">Inactive</SelectItem>
+                        <SelectItem value="Renewal Due">Renewal Due</SelectItem>
+                        <SelectItem value="No Response">No Response</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="ghost" size="sm" onClick={resetClientFilters}>
+                      <X className="h-4 w-4 mr-1" /> Reset
+                    </Button>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground">
+                    {matchedClients.length} of {clients.length} clients match
+                  </div>
+
+                  {/* Results list */}
+                  <div className="border rounded-lg max-h-[380px] overflow-y-auto divide-y">
+                    {matchedClients.length === 0 ? (
+                      <div className="text-center text-muted-foreground py-10 text-sm">
+                        No clients match the current search.
+                      </div>
+                    ) : (
+                      matchedClients.map((c) => {
+                        const selected = clientId === c.id;
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => setClientId(c.id)}
+                            className={`w-full text-left flex items-center gap-3 p-3 hover:bg-muted/40 transition-colors ${
+                              selected ? "bg-emerald-50 hover:bg-emerald-50" : ""
+                            }`}
+                          >
+                            {c.avatar ? (
+                              <img src={c.avatar} alt={c.name} className="h-9 w-9 rounded-full object-cover" />
+                            ) : (
+                              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                                {c.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-sm truncate">{c.name}</span>
+                                <Badge variant="outline" className="text-[10px]">{c.clientId}</Badge>
+                                {selected && (
+                                  <Badge className="text-[10px] bg-emerald-600">
+                                    <CheckCircle2 className="h-3 w-3 mr-0.5" /> Selected
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {c.mobile} · {c.city} · {c.registrationType} · {c.planType ?? "—"}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+
                   {selectedClient && (
-                    <div className="rounded-lg border p-3 max-w-md text-sm bg-muted/30">
-                      <div className="font-medium">{selectedClient.name}</div>
-                      <div className="text-muted-foreground text-xs">
-                        {selectedClient.clientId} · {selectedClient.mobile} · {selectedClient.city}
+                    <div className="rounded-lg border-2 border-emerald-200 p-3 text-sm bg-emerald-50">
+                      <div className="font-medium text-emerald-900">{selectedClient.name}</div>
+                      <div className="text-emerald-700 text-xs mt-0.5">
+                        {selectedClient.clientId} · {selectedClient.mobile} · {selectedClient.city} ·{" "}
+                        {selectedClient.email || "no email"}
                       </div>
                     </div>
                   )}
+
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={goBack}><ArrowLeft className="h-4 w-4 mr-1" /> Back</Button>
-                    <Button onClick={goNext}>Next <ArrowRight className="h-4 w-4 ml-1" /></Button>
+                    <Button onClick={goNext} disabled={!clientId}>
+                      Next <ArrowRight className="h-4 w-4 ml-1" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
