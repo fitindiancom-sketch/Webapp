@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
+import { useCreateStaffAccount } from "../hooks/use-auth";
+import { extractApiError } from "../lib/apiError";
 
 export default function StaffPage() {
   const [staff, setStaff] = useState<Staff[]>([]);
@@ -26,10 +28,13 @@ export default function StaffPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   
   const { matrix, updatePermission } = usePermissionsStore();
+  const createAccount = useCreateStaffAccount();
 
   const [newStaff, setNewStaff] = useState<Partial<Staff>>({
     name: "", email: "", mobile: "", role: "Dietitian", department: "", status: "Active", joinDate: format(new Date(), "yyyy-MM-dd")
   });
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const loadStaff = async () => {
     const data = await staffApi.list();
@@ -51,10 +56,38 @@ export default function StaffPage() {
       toast.error("Please fill required fields");
       return;
     }
+    if (!password || password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    // Split full name into first/last for the login account record.
+    const trimmed = (newStaff.name ?? "").trim();
+    const [firstName, ...rest] = trimmed.split(/\s+/);
+    const lastName = rest.join(" ") || undefined;
+
+    try {
+      await createAccount.mutateAsync({
+        email: newStaff.email!,
+        password,
+        firstName: firstName || undefined,
+        lastName,
+      });
+    } catch (err) {
+      toast.error(extractApiError(err, "Could not create login account"));
+      return;
+    }
+
     await staffApi.create(newStaff as Omit<Staff, "id">);
-    toast.success("Staff added successfully");
+    toast.success("Staff added — they can sign in with this email and password");
     setIsAddModalOpen(false);
     setNewStaff({ name: "", email: "", mobile: "", role: "Dietitian", department: "", status: "Active", joinDate: format(new Date(), "yyyy-MM-dd") });
+    setPassword("");
+    setConfirmPassword("");
     loadStaff();
   };
 
@@ -260,10 +293,42 @@ export default function StaffPage() {
               <Label>Join Date</Label>
               <Input type="date" value={newStaff.joinDate} onChange={e => setNewStaff({...newStaff, joinDate: e.target.value})} />
             </div>
+            <div className="grid gap-2 col-span-2">
+              <Label>Login Password</Label>
+              <Input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                autoComplete="new-password"
+                data-testid="input-staff-password"
+              />
+              <p className="text-xs text-muted-foreground">
+                The staff member will sign in with their email and this password.
+                They can change it later from their profile.
+              </p>
+            </div>
+            <div className="grid gap-2 col-span-2">
+              <Label>Confirm Password</Label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter password"
+                autoComplete="new-password"
+                data-testid="input-staff-confirm-password"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddStaff}>Add Staff</Button>
+            <Button
+              onClick={handleAddStaff}
+              disabled={createAccount.isPending}
+              data-testid="button-add-staff-submit"
+            >
+              {createAccount.isPending ? "Adding..." : "Add Staff"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

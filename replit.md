@@ -66,6 +66,13 @@ mirror that DDL exactly. The only DDL the app issues is an idempotent
   - `POST /api/auth/register` — body `{ email, password, firstName?, lastName? }`,
     bcrypt-hashes the password, inserts the user, starts a session, returns
     the public user shape.
+  - `POST /api/auth/change-password` — auth-required, body
+    `{ currentPassword, newPassword }`, updates the signed-in user's password.
+  - `POST /api/admin/users` — auth-required, body
+    `{ email, password, firstName?, lastName? }`, creates a login account for
+    another person (used by the Staff page when an admin adds a staff member).
+    Does **not** modify the current admin's session. Returns 409 on duplicate
+    email.
   - `POST /api/auth/login` — body `{ email, password }`, verifies bcrypt
     hash, starts a session.
   - `POST /api/auth/logout` — destroys the session and clears the cookie.
@@ -88,14 +95,19 @@ Required env vars:
 On the frontend:
 
 - `src/hooks/use-auth.ts` — `useAuth()` (current user), `useLogin()`,
-  `useRegister()`, `useLogout()` mutations.
+  `useRegister()`, `useLogout()`, `useChangePassword()`,
+  `useCreateStaffAccount()` mutations.
 - `src/components/RequireAuth.tsx` — route guard that redirects to `/login`.
+- `src/components/ChangePasswordDialog.tsx` — modal opened from the avatar
+  dropdown; lets the signed-in user update their own password.
 - `src/pages/login.tsx` — email + password form, link to `/register`.
 - `src/pages/register.tsx` — sign-up form (first/last name, email, password +
   confirm).
-- `src/layouts/AppLayout.tsx` — logout dropdown calls `useLogout` then
-  navigates to `/login`.
+- `src/layouts/AppLayout.tsx` — avatar dropdown has **Change Password** and
+  **Logout** items; logout navigates to `/login`.
 - `src/lib/queryClient.ts` — `apiFetch` helper sends `credentials: "include"`.
+- `src/lib/apiError.ts` — `extractApiError(err, fallback)` parses the JSON
+  message body that `apiFetch` puts on `Error.message`.
 
 The vite dev server proxies `/api/*` to the api-server (`vite.config.ts`).
 
@@ -107,6 +119,7 @@ All non-auth routes live under `/api` and require `isAuthenticated`:
 | ---------------- | ------------------------------------------------------------------ |
 | Clients          | `GET/POST /clients`, `GET/PATCH/DELETE /clients/:id`               |
 | Staff            | `GET/POST /staff`, `GET/PATCH/DELETE /staff/:id`                   |
+| Admin users      | `POST /admin/users` (creates a login account; auth required)       |
 | Diet plans       | `GET/POST /diet-plans`, `GET/PATCH/DELETE /diet-plans/:id`         |
 | Diet plan meals  | `PUT/DELETE /diet-plans/:id/meals/:mealType`                       |
 | Diet plan parts  | `PUT/DELETE /diet-plans/:id/sections/:sectionType`                 |

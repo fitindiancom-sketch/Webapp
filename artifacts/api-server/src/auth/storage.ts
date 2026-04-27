@@ -12,6 +12,7 @@ export interface IAuthStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: NewAuthUser): Promise<User>;
+  updatePassword(id: string, passwordHash: string): Promise<void>;
 }
 
 class AuthStorage implements IAuthStorage {
@@ -40,6 +41,13 @@ class AuthStorage implements IAuthStorage {
       })
       .returning();
     return user;
+  }
+
+  async updatePassword(id: string, passwordHash: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(eq(users.id, id));
   }
 }
 

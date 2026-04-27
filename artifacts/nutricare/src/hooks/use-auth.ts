@@ -91,3 +91,43 @@ export function useLogout() {
     },
   });
 }
+
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export function useChangePassword() {
+  return useMutation<{ ok: true }, Error, ChangePasswordInput>({
+    mutationFn: (body) =>
+      apiFetch<{ ok: true }>("/api/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+  });
+}
+
+export interface CreateStaffAccountInput {
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+/**
+ * Admin-only: create a login account for a newly-added staff member.
+ * Does not change the current admin's session.
+ */
+export function useCreateStaffAccount() {
+  return useMutation<
+    { id: string; email: string | null },
+    Error,
+    CreateStaffAccountInput
+  >({
+    mutationFn: (body) =>
+      apiFetch<{ id: string; email: string | null }>("/api/admin/users", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+  });
+}

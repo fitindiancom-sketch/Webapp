@@ -3,12 +3,13 @@ import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Users, Calendar, Utensils,
   LineChart, Users2, CreditCard, PieChart,
-  Bell, Settings, LogOut, Menu,
+  Bell, Settings, LogOut, Menu, KeyRound,
 } from "lucide-react";
 import { useAuth, useLogout } from "../hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ChangePasswordDialog } from "../components/ChangePasswordDialog";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -38,6 +39,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { user } = useAuth();
   const logout = useLogout();
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
+  const [changePasswordOpen, setChangePasswordOpen] = React.useState(false);
 
   const handleLogout = async () => {
     try {
@@ -108,6 +110,13 @@ export function AppLayout({ children }: AppLayoutProps) {
                     </div>
                   )}
                 </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  data-testid="button-change-password"
+                  onClick={() => setChangePasswordOpen(true)}
+                >
+                  <KeyRound className="h-4 w-4 mr-2" /> Change Password
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   data-testid="button-logout"
                   onClick={handleLogout}
@@ -116,6 +125,10 @@ export function AppLayout({ children }: AppLayoutProps) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <ChangePasswordDialog
+              open={changePasswordOpen}
+              onOpenChange={setChangePasswordOpen}
+            />
           </div>
         </header>
 

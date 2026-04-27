@@ -16,6 +16,11 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(8, "New password must be at least 8 characters"),
+});
+
 function publicUser(u: {
   id: string;
   email: string | null;
@@ -123,6 +128,41 @@ export function authRouter(): IRouter {
       res.clearCookie("connect.sid");
       res.json({ ok: true });
     });
+  });
+
+  // POST /api/auth/change-password — current user updates their own password
+  router.post("/auth/change-password", isAuthenticated, async (req, res, next) => {
+    try {
+      const parsed = changePasswordSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          message: parsed.error.issues[0]?.message ?? "Invalid input",
+          issues: parsed.error.issues,
+        });
+      }
+
+      const { currentPassword, newPassword } = parsed.data;
+      const userId = req.session.userId!;
+      const user = await authStorage.getUser(userId);
+      if (!user || !user.passwordHash) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const ok = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!ok) {
+        return res
+          .status(400)
+          .json({ message: "Current password is incorrect" });
+      }
+
+      const newHash = await bcrypt.hash(newPassword, 12);
+      await authStorage.updatePassword(user.id, newHash);
+      res.json({ ok: true });
+      return;
+    } catch (err) {
+      next(err);
+      return;
+    }
   });
 
   // GET /api/auth/user — current signed-in user (or 401)
