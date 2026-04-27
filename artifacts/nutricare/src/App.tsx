@@ -10,6 +10,7 @@ import Login from "./pages/login";
 import Register from "./pages/register";
 import Dashboard from "./pages/dashboard";
 import Clients from "./pages/clients";
+import ClientReports from "./pages/client-reports";
 import DietPlans from "./pages/diet-plans";
 import Calendar from "./pages/calendar";
 import Progress from "./pages/progress";
@@ -30,6 +31,7 @@ function ProtectedRouter() {
     <RequireAuth>
       <Switch>
         <Route path="/dashboard" component={Dashboard} />
+        <Route path="/clients/reports" component={ClientReports} />
         <Route path="/clients" component={Clients} />
         <Route path="/diet-plans" component={DietPlans} />
         <Route path="/calendar" component={Calendar} />

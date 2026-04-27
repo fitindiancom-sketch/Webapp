@@ -21,7 +21,7 @@ import { LIFECYCLE_LABELS, LifecycleStatus, Client } from "../types";
 import { useDietPlanStore } from "../store/dietPlans";
 import { useClientsStore } from "../store/clients";
 import { enrichClient } from "../lib/clientStatus";
-import { Filter, Search, X, FileText, UserPlus, CheckCircle2 } from "lucide-react";
+import { Filter, Search, X, FileText, UserPlus, CheckCircle2, FileBarChart2 } from "lucide-react";
 import { toast } from "sonner";
 
 const FILTER_TABS: Array<{ key: "all" | LifecycleStatus | "online" | "visit"; label: string }> = [
@@ -186,9 +186,18 @@ export default function Clients() {
               {enrichedClients.length} of {allClients.length} clients
             </p>
           </div>
-          <Button onClick={openAddDialog}>
-            <UserPlus className="h-4 w-4 mr-1.5" /> Add New Client
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setLocation("/clients/reports")}
+              data-testid="button-open-client-reports"
+            >
+              <FileBarChart2 className="h-4 w-4 mr-1.5" /> Reports & Data
+            </Button>
+            <Button onClick={openAddDialog}>
+              <UserPlus className="h-4 w-4 mr-1.5" /> Add New Client
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="all" className="w-full">

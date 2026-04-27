@@ -100,6 +100,11 @@ On the frontend:
 - `src/components/RequireAuth.tsx` — route guard that redirects to `/login`.
 - `src/components/ChangePasswordDialog.tsx` — modal opened from the avatar
   dropdown; lets the signed-in user update their own password.
+- `src/pages/client-reports.tsx` — sub-page of Clients at
+  `/clients/reports`. Shares the Clients page filter bar (search, dietitian,
+  city, plan, date) plus the lifecycle/registration pills (defaults to
+  "Active"). Each filtered client expands into Photos and Progress Report
+  tabs. Reachable via the "Reports & Data" button on the Clients page header.
 - `src/pages/login.tsx` — email + password form, link to `/register`.
 - `src/pages/register.tsx` — sign-up form (first/last name, email, password +
   confirm).
