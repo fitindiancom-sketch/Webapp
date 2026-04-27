@@ -22,12 +22,15 @@ export async function ensureAuthTables(): Promise<void> {
     CREATE TABLE IF NOT EXISTS users (
       id                 varchar PRIMARY KEY DEFAULT gen_random_uuid(),
       email              varchar UNIQUE,
+      password_hash      varchar,
       first_name         varchar,
       last_name          varchar,
       profile_image_url  varchar,
       created_at         timestamp DEFAULT now(),
       updated_at         timestamp DEFAULT now()
     );
+
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash varchar;
   `;
 
   const c = await pool.connect();

@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import { RequireAuth } from "@/components/RequireAuth";
 
 import Login from "./pages/login";
+import Register from "./pages/register";
 import Dashboard from "./pages/dashboard";
 import Clients from "./pages/clients";
 import DietPlans from "./pages/diet-plans";
@@ -51,6 +52,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
       <Route component={ProtectedRouter} />
     </Switch>
   );

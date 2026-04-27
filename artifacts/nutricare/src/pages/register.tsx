@@ -10,15 +10,18 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth, useLogin } from "../hooks/use-auth";
+import { useAuth, useRegister } from "../hooks/use-auth";
 
-export default function Login() {
+export default function Register() {
   const [, setLocation] = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
-  const login = useLogin();
+  const register = useRegister();
 
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,11 +33,26 @@ export default function Login() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+
+    if (password.length < 8) {
+      setErrorMsg("Password must be at least 8 characters.");
+      return;
+    }
+    if (password !== confirm) {
+      setErrorMsg("Passwords do not match.");
+      return;
+    }
+
     try {
-      await login.mutateAsync({ email, password });
+      await register.mutateAsync({
+        email,
+        password,
+        firstName: firstName.trim() || undefined,
+        lastName: lastName.trim() || undefined,
+      });
       setLocation("/dashboard");
     } catch (err: any) {
-      setErrorMsg(err?.message || "Sign in failed. Please try again.");
+      setErrorMsg(err?.message || "Could not create account. Please try again.");
     }
   };
 
@@ -45,13 +63,38 @@ export default function Login() {
           <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4">
             <span className="text-primary font-bold text-2xl">NC</span>
           </div>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <CardTitle className="text-2xl">Create your account</CardTitle>
           <CardDescription>
-            Sign in to your NutriCare account
+            Get started with NutriCare in a minute
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First name</Label>
+                <Input
+                  id="firstName"
+                  autoComplete="given-name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Jane"
+                  data-testid="input-first-name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last name</Label>
+                <Input
+                  id="lastName"
+                  autoComplete="family-name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Doe"
+                  data-testid="input-last-name"
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -65,24 +108,41 @@ export default function Login() {
                 data-testid="input-email"
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
+                minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="At least 8 characters"
                 data-testid="input-password"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirm">Confirm password</Label>
+              <Input
+                id="confirm"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={8}
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                placeholder="Repeat password"
+                data-testid="input-confirm-password"
               />
             </div>
 
             {errorMsg && (
               <p
                 className="text-sm text-destructive"
-                data-testid="text-login-error"
+                data-testid="text-register-error"
               >
                 {errorMsg}
               </p>
@@ -91,20 +151,20 @@ export default function Login() {
             <Button
               type="submit"
               className="w-full"
-              disabled={login.isPending || isLoading}
-              data-testid="button-login"
+              disabled={register.isPending || isLoading}
+              data-testid="button-register"
             >
-              {login.isPending ? "Signing in…" : "Sign in"}
+              {register.isPending ? "Creating account…" : "Create account"}
             </Button>
 
             <p className="text-sm text-center text-muted-foreground">
-              Don't have an account?{" "}
+              Already have an account?{" "}
               <Link
-                href="/register"
+                href="/login"
                 className="text-primary font-medium hover:underline"
-                data-testid="link-register"
+                data-testid="link-login"
               >
-                Create one
+                Sign in
               </Link>
             </p>
           </form>

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "../lib/queryClient";
 
 export interface AuthUser {
@@ -9,13 +9,15 @@ export interface AuthUser {
   profileImageUrl: string | null;
 }
 
+const USER_QUERY_KEY = ["/api/auth/user"] as const;
+
 /**
- * Replit Auth–backed session. Fetches /api/auth/user; treats a 401 as
+ * Custom email/password auth session. Fetches /api/auth/user; treats a 401 as
  * "not signed in" rather than an error so the UI can route to /login.
  */
 export function useAuth() {
   const { data, isLoading, error, refetch } = useQuery<AuthUser | null>({
-    queryKey: ["/api/auth/user"],
+    queryKey: USER_QUERY_KEY,
     queryFn: async () => {
       try {
         return await apiFetch<AuthUser>("/api/auth/user");
@@ -35,4 +37,57 @@ export function useAuth() {
     error,
     refetch,
   };
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface RegisterInput {
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+export function useLogin() {
+  const qc = useQueryClient();
+  return useMutation<AuthUser, Error, LoginInput>({
+    mutationFn: (body) =>
+      apiFetch<AuthUser>("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (user) => {
+      qc.setQueryData(USER_QUERY_KEY, user);
+    },
+  });
+}
+
+export function useRegister() {
+  const qc = useQueryClient();
+  return useMutation<AuthUser, Error, RegisterInput>({
+    mutationFn: (body) =>
+      apiFetch<AuthUser>("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (user) => {
+      qc.setQueryData(USER_QUERY_KEY, user);
+    },
+  });
+}
+
+export function useLogout() {
+  const qc = useQueryClient();
+  return useMutation<void, Error, void>({
+    mutationFn: async () => {
+      await apiFetch<{ ok: true }>("/api/auth/logout", { method: "POST" });
+    },
+    onSuccess: () => {
+      qc.setQueryData(USER_QUERY_KEY, null);
+      qc.clear();
+    },
+  });
 }

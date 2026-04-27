@@ -5,7 +5,7 @@ import {
   LineChart, Users2, CreditCard, PieChart,
   Bell, Settings, LogOut, Menu,
 } from "lucide-react";
-import { useAuth } from "../hooks/use-auth";
+import { useAuth, useLogout } from "../hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -36,7 +36,16 @@ function displayName(u: { firstName: string | null; lastName: string | null; ema
 export function AppLayout({ children }: AppLayoutProps) {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
+  const logout = useLogout();
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
+
+  const handleLogout = async () => {
+    try {
+      await logout.mutateAsync();
+    } finally {
+      setLocation("/login");
+    }
+  };
 
   const name = displayName(user);
   const avatar = user?.profileImageUrl ?? undefined;
@@ -101,9 +110,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 </div>
                 <DropdownMenuItem
                   data-testid="button-logout"
-                  onClick={() => {
-                    window.location.href = "/api/logout";
-                  }}
+                  onClick={handleLogout}
                 >
                   <LogOut className="h-4 w-4 mr-2" /> Logout
                 </DropdownMenuItem>

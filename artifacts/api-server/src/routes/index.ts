@@ -8,12 +8,12 @@ import photosRouter from "./photos";
 import progressLogsRouter from "./progressLogs";
 import paymentsRouter from "./payments";
 import dashboardRouter from "./dashboard";
-import { authUserRouter } from "../auth";
+import { authRouter } from "../auth";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
-router.use(authUserRouter());
+router.use(authRouter());
 router.use(clientsRouter);
 router.use(staffRouter);
 router.use(dietPlansRouter);

@@ -71,6 +71,9 @@ export default defineConfig({
         target: process.env.API_URL ?? "http://localhost:8080",
         changeOrigin: true,
         secure: false,
+        // Forward X-Forwarded-* headers (incl. proto) so the API server's
+        // express-session can correctly detect HTTPS via trust-proxy.
+        xfwd: true,
       },
     },
   },

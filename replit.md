@@ -16,7 +16,7 @@ Drizzle/Postgres, and Replit Auth for sign-in.
 - **TypeScript version**: 5.9
 - **API framework**: Express 5
 - **Database**: Supabase Postgres + Drizzle ORM
-- **Auth**: Replit Auth (OpenID Connect via `openid-client`) with sessions in Postgres
+- **Auth**: Custom email/password auth (bcrypt + express-session) backed by Supabase Postgres
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **Frontend**: React 19, Vite, wouter, @tanstack/react-query, shadcn/ui
 
@@ -53,25 +53,49 @@ mirror that DDL exactly. The only DDL the app issues is an idempotent
 `CREATE TABLE IF NOT EXISTS` for the auth `sessions` and `users` tables
 (see `artifacts/api-server/src/lib/initDb.ts`).
 
-## Auth (Replit Auth)
+## Auth (Custom email/password)
 
-`artifacts/api-server/src/auth/*` mounts the Replit OIDC integration:
+`artifacts/api-server/src/auth/*` implements a self-hosted auth system:
 
-- `GET /api/login` → redirect to Replit consent screen
-- `GET /api/callback` → OIDC callback, sets session cookie
-- `GET /api/logout` → clear session, redirect to Replit end-session
-- `GET /api/auth/user` → returns the current `users` row (401 if not signed in)
+- `customAuth.ts` — express-session middleware, sessions stored in Postgres
+  via `connect-pg-simple` sharing the `@workspace/db` pool. `isAuthenticated`
+  guard checks for `req.session.userId`.
+- `storage.ts` — `getUser`, `getUserByEmail`, `createUser` against the
+  `users` table.
+- `routes.ts` — public REST endpoints:
+  - `POST /api/auth/register` — body `{ email, password, firstName?, lastName? }`,
+    bcrypt-hashes the password, inserts the user, starts a session, returns
+    the public user shape.
+  - `POST /api/auth/login` — body `{ email, password }`, verifies bcrypt
+    hash, starts a session.
+  - `POST /api/auth/logout` — destroys the session and clears the cookie.
+  - `GET /api/auth/user` — returns the signed-in user (401 otherwise).
 
-Sessions are stored in the `sessions` table (managed by `connect-pg-simple`,
-sharing the `@workspace/db` pool so it inherits the SSL config).
+Cookies use `secure: 'auto'` so they work both behind Replit's HTTPS proxy
+and over plain HTTP locally. The Vite proxy is configured with `xfwd: true`
+so the API server sees the correct `X-Forwarded-Proto` and trust-proxy can
+detect HTTPS.
+
+The `users` table now has an extra `password_hash` column. The schema is
+defined in `lib/db/src/schema/auth.ts`; `initDb.ts` ensures the column
+exists with `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`.
+
+Required env vars:
+
+- `SESSION_SECRET` — signing key for session cookies (already set).
+- `SUPABASE_PG_URL` — Supabase transaction-pooler URI.
 
 On the frontend:
 
-- `src/hooks/use-auth.ts` — `useAuth()` queries `/api/auth/user`
-- `src/components/RequireAuth.tsx` — route guard that redirects to `/login`
-- `src/pages/login.tsx` — single "Sign in" button → `window.location = "/api/login"`
-- `src/layouts/AppLayout.tsx` — logout link → `window.location = "/api/logout"`
-- `src/lib/queryClient.ts` — `apiFetch` helper that always sends `credentials: "include"`
+- `src/hooks/use-auth.ts` — `useAuth()` (current user), `useLogin()`,
+  `useRegister()`, `useLogout()` mutations.
+- `src/components/RequireAuth.tsx` — route guard that redirects to `/login`.
+- `src/pages/login.tsx` — email + password form, link to `/register`.
+- `src/pages/register.tsx` — sign-up form (first/last name, email, password +
+  confirm).
+- `src/layouts/AppLayout.tsx` — logout dropdown calls `useLogout` then
+  navigates to `/login`.
+- `src/lib/queryClient.ts` — `apiFetch` helper sends `credentials: "include"`.
 
 The vite dev server proxies `/api/*` to the api-server (`vite.config.ts`).
 
