@@ -21,7 +21,21 @@ import { LIFECYCLE_LABELS, LifecycleStatus, Client } from "../types";
 import { useDietPlanStore } from "../store/dietPlans";
 import { useClientsStore } from "../store/clients";
 import { enrichClient } from "../lib/clientStatus";
-import { Filter, Search, X, FileText, UserPlus, CheckCircle2, FileBarChart2 } from "lucide-react";
+import {
+  useCreateClientCredentials,
+  type CreateClientCredentialsResult,
+} from "../hooks/use-auth";
+import {
+  Filter,
+  Search,
+  X,
+  FileText,
+  UserPlus,
+  CheckCircle2,
+  FileBarChart2,
+  Copy,
+  KeyRound,
+} from "lucide-react";
 import { toast } from "sonner";
 
 const FILTER_TABS: Array<{ key: "all" | LifecycleStatus | "online" | "visit"; label: string }> = [
@@ -81,6 +95,9 @@ export default function Clients() {
   const [phase, setPhase] = React.useState<"form" | "success">("form");
   const [form, setForm] = React.useState(EMPTY_FORM);
   const [justAdded, setJustAdded] = React.useState<Client | null>(null);
+  const [justCredentials, setJustCredentials] =
+    React.useState<CreateClientCredentialsResult | null>(null);
+  const createCredentials = useCreateClientCredentials();
 
   const dietitians = staff.filter((s) => s.role === "Dietitian");
   const cities = Array.from(new Set(allClients.map((c) => c.city)));
@@ -135,10 +152,11 @@ export default function Clients() {
     setForm(EMPTY_FORM);
     setPhase("form");
     setJustAdded(null);
+    setJustCredentials(null);
     setAddOpen(true);
   };
 
-  const handleSaveClient = () => {
+  const handleSaveClient = async () => {
     if (!form.name.trim() || !form.mobile.trim() || !form.city.trim()) {
       toast.error("Please fill name, mobile, and city");
       return;
@@ -169,6 +187,33 @@ export default function Clients() {
     setJustAdded(newClient);
     setPhase("success");
     toast.success("Client Registered Successfully");
+
+    // Auto-provision login credentials. Failure here shouldn't roll back the
+    // client registration — surface the error and let the dietitian retry.
+    try {
+      const result = await createCredentials.mutateAsync({
+        name: newClient.name,
+        email: newClient.email,
+        mobile: newClient.mobile,
+      });
+      setJustCredentials(result);
+      toast.success(
+        result.created
+          ? "Login credentials created"
+          : "Login already exists — showing existing credentials",
+      );
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not create login credentials");
+    }
+  };
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error("Could not copy to clipboard");
+    }
   };
 
   const goCreatePlanFor = (client: Client) => {
@@ -490,6 +535,84 @@ export default function Clients() {
                   </div>
                 </div>
               )}
+
+              {/* Auto-generated client login credentials */}
+              <div className="rounded-lg border-2 border-sky-200 bg-sky-50 p-4 my-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <KeyRound className="h-4 w-4 text-sky-700" />
+                  <div className="font-semibold text-sky-900 text-sm">
+                    Client Login Credentials
+                  </div>
+                </div>
+                {createCredentials.isPending ? (
+                  <div className="text-xs text-sky-700">
+                    Generating login credentials…
+                  </div>
+                ) : justCredentials ? (
+                  <div className="space-y-2">
+                    {!justCredentials.created && (
+                      <div className="text-[11px] text-amber-700 bg-amber-100 rounded px-2 py-1">
+                        {justCredentials.message ??
+                          "An account with this login already existed — sharing existing credentials."}
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 gap-2">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-sky-700">
+                          Login (username)
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <code className="flex-1 text-xs bg-white border border-sky-200 rounded px-2 py-1 font-mono break-all">
+                            {justCredentials.login}
+                          </code>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2"
+                            onClick={() =>
+                              copyToClipboard(justCredentials.login, "Login")
+                            }
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-sky-700">
+                          Password
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <code className="flex-1 text-xs bg-white border border-sky-200 rounded px-2 py-1 font-mono">
+                            {justCredentials.password}
+                          </code>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2"
+                            onClick={() =>
+                              copyToClipboard(
+                                justCredentials.password,
+                                "Password",
+                              )
+                            }
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-[11px] text-sky-700">
+                      Share these with the client. They can change the password
+                      after their first sign-in.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-xs text-rose-700">
+                    Could not create credentials. Please try again from the
+                    client's profile.
+                  </div>
+                )}
+              </div>
               <DialogFooter className="gap-2">
                 <Button variant="outline" onClick={() => setAddOpen(false)}>
                   Close

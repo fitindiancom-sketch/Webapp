@@ -131,3 +131,36 @@ export function useCreateStaffAccount() {
       }),
   });
 }
+
+export interface CreateClientCredentialsInput {
+  name: string;
+  email?: string;
+  mobile?: string;
+}
+
+export interface CreateClientCredentialsResult {
+  login: string;
+  password: string;
+  created: boolean;
+  message?: string;
+}
+
+/**
+ * Auto-provision a login for a newly-added client. The backend uses the
+ * client's email when present, otherwise synthesizes a stable login from the
+ * mobile number. Password is the standard default ("Diet123") that the
+ * dietitian shares with the client.
+ */
+export function useCreateClientCredentials() {
+  return useMutation<
+    CreateClientCredentialsResult,
+    Error,
+    CreateClientCredentialsInput
+  >({
+    mutationFn: (body) =>
+      apiFetch<CreateClientCredentialsResult>("/api/clients/credentials", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+  });
+}

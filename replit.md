@@ -73,6 +73,14 @@ mirror that DDL exactly. The only DDL the app issues is an idempotent
     another person (used by the Staff page when an admin adds a staff member).
     Does **not** modify the current admin's session. Returns 409 on duplicate
     email.
+  - `POST /api/clients/credentials` — auth-required, body
+    `{ name, email?, mobile? }`. Auto-provisions a client login with the
+    standard default password `Diet123`. Login is the client's email when
+    present, otherwise a synthesized address built from the digits of their
+    mobile (`<digits>@client.nutricare.local`). Idempotent: if the login
+    already exists, returns the existing credentials with `created: false`.
+    `POST /api/clients` also calls this internally when the client is created
+    via the API and includes the resulting credentials on the response.
   - `POST /api/auth/login` — body `{ email, password }`, verifies bcrypt
     hash, starts a session.
   - `POST /api/auth/logout` — destroys the session and clears the cookie.
