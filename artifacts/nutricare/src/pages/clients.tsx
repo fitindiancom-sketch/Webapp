@@ -441,9 +441,14 @@ export default function Clients() {
                     onChange={(e) => setForm({ ...form, mobile: e.target.value })}
                     placeholder="+91 98765 43210"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Used as the client's app login (mobile digits).
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Email</label>
+                  <label className="text-sm font-medium">
+                    Email <span className="text-muted-foreground font-normal">(optional)</span>
+                  </label>
                   <Input
                     type="email"
                     value={form.email}

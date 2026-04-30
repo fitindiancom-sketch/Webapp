@@ -27,19 +27,19 @@ const credentialsSchema = z
   });
 
 /**
- * Build the login email for a client. We prefer the real email when given;
- * otherwise we synthesize a stable address from the mobile number (digits
- * only) under the @client.nutricare.local domain. That keeps every client
- * login unique and lets the same login form (email + password) be reused.
+ * Build the login email for a client. Mobile is the primary identifier
+ * (most clients give us a phone number, not an email), so we synthesize a
+ * stable address from the mobile digits under the @client.nutricare.local
+ * domain. We only fall back to a real email when no mobile is on file.
+ * That keeps every client login unique and lets the same login form
+ * (email + password) be reused.
  */
 function buildClientLogin(email: string | undefined, mobile: string | undefined): string {
+  const digits = (mobile ?? "").replace(/\D/g, "");
+  if (digits.length > 0) return `${digits}@client.nutricare.local`;
   const cleanEmail = (email ?? "").trim();
   if (cleanEmail.length > 0) return cleanEmail.toLowerCase();
-  const digits = (mobile ?? "").replace(/\D/g, "");
-  if (digits.length === 0) {
-    throw new Error("Either email or mobile is required");
-  }
-  return `${digits}@client.nutricare.local`;
+  throw new Error("A mobile number is required to create a login");
 }
 
 function splitName(fullName: string): { firstName: string; lastName: string | null } {
