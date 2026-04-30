@@ -34,6 +34,22 @@ export const staffRoleEnum = pgEnum("staff_role_t", [
 
 export const staffStatusEnum = pgEnum("staff_status_t", ["active", "inactive"]);
 
+/**
+ * For staff with role="support", which client channel(s) they handle.
+ * Drives auto-assignment of new clients to the right team:
+ *   - "online"     → handles clients registered online
+ *   - "visit"      → handles office-visit clients
+ *   - "pune_visit" → handles Pune-specific office visits
+ *   - "all"        → support lead / generalist (catch-all fallback)
+ * NULL on non-support roles.
+ */
+export const supportChannelEnum = pgEnum("support_channel_t", [
+  "online",
+  "visit",
+  "pune_visit",
+  "all",
+]);
+
 export const planStatusEnum = pgEnum("plan_status_t", [
   "draft",
   "active",

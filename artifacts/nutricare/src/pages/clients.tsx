@@ -21,6 +21,7 @@ import { LIFECYCLE_LABELS, LifecycleStatus, Client } from "../types";
 import { useDietPlanStore } from "../store/dietPlans";
 import { useClientsStore } from "../store/clients";
 import { enrichClient } from "../lib/clientStatus";
+import { pickSupportStaff } from "../lib/supportAssignment";
 import {
   useCreateClientCredentials,
   type CreateClientCredentialsResult,
@@ -67,7 +68,8 @@ const EMPTY_FORM = {
   email: "",
   city: "",
   dietitianId: "s1",
-  supportStaffId: "s2",
+  /** Empty string = "let the system auto-assign". */
+  supportStaffId: "" as string,
   registrationType: "Online" as "Online" | "Visit" | "Pune Visit",
   planType: "Standard" as "Basic" | "Standard" | "Premium" | "VIP",
 };
@@ -161,6 +163,11 @@ export default function Clients() {
       toast.error("Please fill name, mobile, and city");
       return;
     }
+    // Resolve support staff: explicit override wins, else auto-pick by channel.
+    const resolvedSupportId =
+      form.supportStaffId ||
+      pickSupportStaff(form.registrationType, staff, allClients).staffId ||
+      "";
     const nextNum = 10000 + allClients.length + 1;
     const todayIso = new Date().toISOString().slice(0, 10);
     const newClient: Client = {
@@ -171,7 +178,7 @@ export default function Clients() {
       email: form.email.trim() || undefined,
       city: form.city.trim(),
       dietitianId: form.dietitianId,
-      supportStaffId: form.supportStaffId,
+      supportStaffId: resolvedSupportId,
       status: "Active",
       lifecycleStatus: "plan_not_started",
       registrationType: form.registrationType,
@@ -477,15 +484,106 @@ export default function Clients() {
                   <label className="text-sm font-medium">Registration Type</label>
                   <Select
                     value={form.registrationType}
-                    onValueChange={(v: "Online" | "Visit" | "Pune Visit") => setForm({ ...form, registrationType: v })}
+                    onValueChange={(v: "Online" | "Visit" | "Pune Visit") =>
+                      setForm({ ...form, registrationType: v, supportStaffId: "" })
+                    }
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Online">Online</SelectItem>
-                      <SelectItem value="Visit">Visit</SelectItem>
+                      <SelectItem value="Visit">Visit (Office)</SelectItem>
                       <SelectItem value="Pune Visit">Pune Visit</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  {(() => {
+                    const auto = pickSupportStaff(
+                      form.registrationType,
+                      staff,
+                      allClients,
+                    );
+                    const overrideStaff = form.supportStaffId
+                      ? staff.find((s) => s.id === form.supportStaffId) ?? null
+                      : null;
+                    const shown = overrideStaff ?? auto.staff;
+                    return (
+                      <div className="rounded-md border bg-muted/40 p-3 space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              Support Staff
+                            </div>
+                            {shown ? (
+                              <div className="mt-1 flex items-center gap-2">
+                                <img
+                                  src={shown.avatar}
+                                  alt={shown.name}
+                                  className="h-7 w-7 rounded-full object-cover"
+                                />
+                                <div className="leading-tight">
+                                  <div className="text-sm font-medium">{shown.name}</div>
+                                  <div className="text-[11px] text-muted-foreground">
+                                    {shown.role}
+                                    {!overrideStaff && " · auto-assigned"}
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-1 text-xs text-amber-700">
+                                {auto.reason}
+                              </div>
+                            )}
+                          </div>
+                          {overrideStaff && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setForm({ ...form, supportStaffId: "" })}
+                              className="h-7 text-xs"
+                            >
+                              Reset to auto
+                            </Button>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={form.supportStaffId || "__auto__"}
+                            onValueChange={(v) =>
+                              setForm({
+                                ...form,
+                                supportStaffId: v === "__auto__" ? "" : v,
+                              })
+                            }
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder="Override support staff…" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__auto__">
+                                Auto-assign by registration type
+                              </SelectItem>
+                              {staff
+                                .filter(
+                                  (s) =>
+                                    s.status === "Active" &&
+                                    (s.role === "Online Support" ||
+                                      s.role === "Visit Support" ||
+                                      s.role === "Pune Visit Support" ||
+                                      s.role === "Support Lead"),
+                                )
+                                .map((s) => (
+                                  <SelectItem key={s.id} value={s.id}>
+                                    {s.name} — {s.role}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-medium">Plan Type</label>
@@ -520,26 +618,57 @@ export default function Clients() {
                   The new client has been added to your database.
                 </DialogDescription>
               </DialogHeader>
-              {justAdded && (
-                <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-4 my-2">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={justAdded.avatar}
-                      alt={justAdded.name}
-                      className="h-12 w-12 rounded-full object-cover"
-                    />
-                    <div className="flex-1">
-                      <div className="font-semibold text-emerald-900">{justAdded.name}</div>
-                      <div className="text-xs text-emerald-700">
-                        {justAdded.clientId} · {justAdded.mobile} · {justAdded.city}
+              {justAdded && (() => {
+                const supportStaff = staff.find(
+                  (s) => s.id === justAdded.supportStaffId,
+                );
+                const dietitianStaff = staff.find(
+                  (s) => s.id === justAdded.dietitianId,
+                );
+                return (
+                  <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-4 my-2 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={justAdded.avatar}
+                        alt={justAdded.name}
+                        className="h-12 w-12 rounded-full object-cover"
+                      />
+                      <div className="flex-1">
+                        <div className="font-semibold text-emerald-900">{justAdded.name}</div>
+                        <div className="text-xs text-emerald-700">
+                          {justAdded.clientId} · {justAdded.mobile} · {justAdded.city}
+                        </div>
+                        <div className="text-xs text-emerald-700 mt-0.5">
+                          {justAdded.registrationType} · {justAdded.planType} plan
+                        </div>
                       </div>
-                      <div className="text-xs text-emerald-700 mt-0.5">
-                        {justAdded.registrationType} · {justAdded.planType} plan
+                    </div>
+                    <div className="border-t border-emerald-200 pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-emerald-700">
+                          Dietitian
+                        </div>
+                        <div className="font-medium text-emerald-900">
+                          {dietitianStaff?.name ?? "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-emerald-700">
+                          Support staff (auto-assigned)
+                        </div>
+                        <div className="font-medium text-emerald-900">
+                          {supportStaff?.name ?? "Not available"}
+                        </div>
+                        {supportStaff && (
+                          <div className="text-[10px] text-emerald-700">
+                            {supportStaff.role}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Auto-generated client login credentials */}
               <div className="rounded-lg border-2 border-sky-200 bg-sky-50 p-4 my-2">

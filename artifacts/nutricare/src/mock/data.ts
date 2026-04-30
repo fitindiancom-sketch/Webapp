@@ -38,7 +38,10 @@ export const staff: Staff[] = [
   { id: "s5", name: "Dr. Anil Kumar", role: "Dietitian", email: "anil@nutricare.com", mobile: "+91 9988776659", status: "Inactive", department: "Clinical", joinDate: "2021-08-05", avatar: "https://i.pravatar.cc/150?u=s5" },
   { id: "s6", name: "Pooja Mehta", role: "Online Support", email: "pooja@nutricare.com", mobile: "+91 9988776660", status: "Active", department: "Support", joinDate: "2023-02-01", avatar: "https://i.pravatar.cc/150?u=s6" },
   { id: "s7", name: "Vivek Joshi", role: "Visit Support", email: "vivek@nutricare.com", mobile: "+91 9988776661", status: "Active", department: "Support", joinDate: "2022-07-22", avatar: "https://i.pravatar.cc/150?u=s7" },
-  { id: "s8", name: "Karan Johar", role: "Admin", email: "karan@nutricare.com", mobile: "+91 9988776662", status: "Active", department: "Management", joinDate: "2019-12-01", avatar: "https://i.pravatar.cc/150?u=s8" }
+  { id: "s8", name: "Karan Johar", role: "Admin", email: "karan@nutricare.com", mobile: "+91 9988776662", status: "Active", department: "Management", joinDate: "2019-12-01", avatar: "https://i.pravatar.cc/150?u=s8" },
+  { id: "s9", name: "Rahul Bhosale", role: "Pune Visit Support", email: "rahul.b@nutricare.com", mobile: "+91 9988776663", status: "Active", department: "Support", joinDate: "2023-04-12", avatar: "https://i.pravatar.cc/150?u=s9" },
+  { id: "s10", name: "Anita Kulkarni", role: "Pune Visit Support", email: "anita.k@nutricare.com", mobile: "+91 9988776664", status: "Active", department: "Support", joinDate: "2023-06-01", avatar: "https://i.pravatar.cc/150?u=s10" },
+  { id: "s11", name: "Meghna Iyer", role: "Support Lead", email: "meghna@nutricare.com", mobile: "+91 9988776665", status: "Active", department: "Support", joinDate: "2021-02-18", avatar: "https://i.pravatar.cc/150?u=s11" }
 ];
 
 export const payments: Payment[] = [

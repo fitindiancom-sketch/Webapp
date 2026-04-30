@@ -96,7 +96,15 @@ export default function StaffPage() {
     toast.success("Permissions updated");
   };
 
-  const roles = ["Dietitian", "Online Support", "Visit Support", "Admin"];
+  const roles = [
+    "Dietitian",
+    "Online Support",
+    "Visit Support",
+    "Pune Visit Support",
+    "Support Lead",
+    "Admin",
+    "Super Admin",
+  ];
   const permissions = [
     { key: "viewClients", label: "View Clients" },
     { key: "editClients", label: "Edit Clients" },

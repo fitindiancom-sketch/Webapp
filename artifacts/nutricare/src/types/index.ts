@@ -1,4 +1,24 @@
-export type Role = "Super Admin" | "Admin" | "Dietitian" | "Online Support" | "Visit Support";
+export type Role =
+  | "Super Admin"
+  | "Admin"
+  | "Dietitian"
+  | "Online Support"
+  | "Visit Support"
+  | "Pune Visit Support"
+  | "Support Lead";
+
+/**
+ * Roles that handle client support tickets / day-to-day client communication.
+ * Used by the auto-assignment logic when a new client is registered.
+ */
+export const SUPPORT_ROLES = [
+  "Online Support",
+  "Visit Support",
+  "Pune Visit Support",
+  "Support Lead",
+] as const satisfies readonly Role[];
+
+export type SupportRole = (typeof SUPPORT_ROLES)[number];
 
 export interface User {
   id: string;

@@ -8,7 +8,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { staffRoleEnum, staffStatusEnum } from "./enums";
+import { staffRoleEnum, staffStatusEnum, supportChannelEnum } from "./enums";
 
 const citext = customType<{ data: string }>({
   dataType() {
@@ -25,6 +25,8 @@ export const staff = pgTable(
     email: citext("email").unique(),
     role: staffRoleEnum("role").notNull(),
     status: staffStatusEnum("status").notNull().default("active"),
+    /** For role="support" only: which client channel(s) this staffer handles. */
+    supportChannel: supportChannelEnum("support_channel"),
     avatarUrl: text("avatar_url"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { db, clients, insertClientSchema } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { db, clients, staff, insertClientSchema } from "@workspace/db";
+import { and, eq, desc, inArray, ne, sql } from "drizzle-orm";
 import { isAuthenticated, authStorage } from "../auth";
 
 const router: IRouter = Router();
@@ -40,6 +40,62 @@ function buildClientLogin(email: string | undefined, mobile: string | undefined)
   const cleanEmail = (email ?? "").trim();
   if (cleanEmail.length > 0) return cleanEmail.toLowerCase();
   throw new Error("A mobile number is required to create a login");
+}
+
+/**
+ * Pick the best support staff for a brand-new client of a given registration
+ * type. Mirrors the frontend logic in `lib/supportAssignment.ts`:
+ *
+ *   - Look at staff whose role = "support" and whose `supportChannel`
+ *     matches the client's channel (with "all" / Support Lead as fallback).
+ *   - Among matching active staff, pick the one with the FEWEST currently
+ *     assigned non-inactive clients (load balancing).
+ *   - Returns null when no support staff is available; the caller should
+ *     leave `assignedSupportId` NULL so a manager can assign manually.
+ */
+async function pickSupportStaffId(
+  registrationType: "online" | "visit" | "pune_visit",
+): Promise<string | null> {
+  const channelOrder: Array<"online" | "visit" | "pune_visit" | "all"> =
+    registrationType === "online"
+      ? ["online", "all"]
+      : registrationType === "pune_visit"
+        ? ["pune_visit", "visit", "all"]
+        : ["visit", "all"];
+
+  const candidates = await db
+    .select({
+      id: staff.id,
+      channel: staff.supportChannel,
+      load: sql<number>`COUNT(${clients.id})`.as("load"),
+    })
+    .from(staff)
+    .leftJoin(
+      clients,
+      and(
+        eq(clients.assignedSupportId, staff.id),
+        ne(clients.status, "inactive"),
+      ),
+    )
+    .where(
+      and(
+        eq(staff.role, "support"),
+        eq(staff.status, "active"),
+        inArray(staff.supportChannel, channelOrder),
+      ),
+    )
+    .groupBy(staff.id, staff.supportChannel);
+
+  if (candidates.length === 0) return null;
+
+  // Sort by channel preference (lower index = more preferred), then by load.
+  const ranked = candidates.sort((a, b) => {
+    const ai = channelOrder.indexOf(a.channel ?? "all");
+    const bi = channelOrder.indexOf(b.channel ?? "all");
+    if (ai !== bi) return ai - bi;
+    return Number(a.load) - Number(b.load);
+  });
+  return ranked[0]?.id ?? null;
 }
 
 function splitName(fullName: string): { firstName: string; lastName: string | null } {
@@ -80,7 +136,21 @@ router.get("/clients/:id", async (req, res, next) => {
 router.post("/clients", async (req, res, next) => {
   try {
     const data = insertClientSchema.parse(req.body);
-    const [row] = await db.insert(clients).values(data).returning();
+
+    // Auto-assign a support staff member based on registration channel,
+    // unless the caller explicitly provided one. Failure to find a match
+    // leaves the field NULL — a manager can assign manually later.
+    const channel = (data.registrationType ?? "online") as
+      | "online"
+      | "visit"
+      | "pune_visit";
+    const assignedSupportId =
+      data.assignedSupportId ?? (await pickSupportStaffId(channel));
+
+    const [row] = await db
+      .insert(clients)
+      .values({ ...data, assignedSupportId })
+      .returning();
 
     // Auto-provision a login for the new client using their email or mobile,
     // with the standard default password. Don't block client creation if the
