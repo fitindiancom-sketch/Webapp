@@ -12,6 +12,10 @@ import { ArrowLeft, ArrowRight, Eye, Save, FileText, Plus, Pencil, Trash2, Check
 import { toast } from "sonner";
 import { useDietPlanStore } from "../store/dietPlans";
 import { useClientsStore } from "../store/clients";
+import {
+  buildClientLogin,
+  DEFAULT_CLIENT_PASSWORD,
+} from "../lib/clientCredentials";
 import { staff } from "../mock/data";
 import type { DietPlanTemplate } from "../types";
 import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
@@ -696,30 +700,43 @@ export default function DietPlans() {
                           </div>
                         </div>
                         <Badge>{p.status}</Badge>
-                        <PDFDownloadLink
-                          document={
-                            <DietPlanPDF
-                              clientName={p.clientName}
-                              clientCode={p.clientCode}
-                              dietitianName={p.dietitianName}
-                              goalWeight={p.goalWeight}
-                              category={p.category}
-                              waterGoal={p.waterGoal}
-                              mustDo={p.mustDo}
-                              instructions={p.instructions}
-                              meals={p.meals}
-                              createdAt={p.createdAt}
-                            />
-                          }
-                          fileName={`NutriCare_${p.clientName.replace(/\s+/g, "_")}_${p.id}.pdf`}
-                        >
-                          {({ loading }) => (
-                            <Button size="sm" variant="outline" disabled={loading}>
-                              <Download className="h-3.5 w-3.5 mr-1" />
-                              {loading ? "..." : "PDF"}
-                            </Button>
-                          )}
-                        </PDFDownloadLink>
+                        {(() => {
+                          const planClient = clients.find(
+                            (c) => c.clientId === p.clientCode,
+                          );
+                          const planLogin = buildClientLogin(
+                            planClient?.email,
+                            planClient?.mobile,
+                          );
+                          return (
+                            <PDFDownloadLink
+                              document={
+                                <DietPlanPDF
+                                  clientName={p.clientName}
+                                  clientCode={p.clientCode}
+                                  dietitianName={p.dietitianName}
+                                  goalWeight={p.goalWeight}
+                                  category={p.category}
+                                  waterGoal={p.waterGoal}
+                                  mustDo={p.mustDo}
+                                  instructions={p.instructions}
+                                  meals={p.meals}
+                                  createdAt={p.createdAt}
+                                  clientLogin={planLogin ?? undefined}
+                                  clientPassword={DEFAULT_CLIENT_PASSWORD}
+                                />
+                              }
+                              fileName={`NutriCare_${p.clientName.replace(/\s+/g, "_")}_${p.id}.pdf`}
+                            >
+                              {({ loading }) => (
+                                <Button size="sm" variant="outline" disabled={loading}>
+                                  <Download className="h-3.5 w-3.5 mr-1" />
+                                  {loading ? "..." : "PDF"}
+                                </Button>
+                              )}
+                            </PDFDownloadLink>
+                          );
+                        })()}
                       </div>
                     ))}
                   </div>
@@ -756,6 +773,13 @@ export default function DietPlans() {
                         meals={meals}
                         clientCity={selectedClient?.city}
                         clientMobile={selectedClient?.mobile}
+                        clientLogin={
+                          buildClientLogin(
+                            selectedClient?.email,
+                            selectedClient?.mobile,
+                          ) ?? undefined
+                        }
+                        clientPassword={DEFAULT_CLIENT_PASSWORD}
                       />
                     }
                     fileName={`NutriCare_${(selectedClient?.name || "Plan").replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`}
@@ -792,6 +816,13 @@ export default function DietPlans() {
                     meals={meals}
                     clientCity={selectedClient?.city}
                     clientMobile={selectedClient?.mobile}
+                    clientLogin={
+                      buildClientLogin(
+                        selectedClient?.email,
+                        selectedClient?.mobile,
+                      ) ?? undefined
+                    }
+                    clientPassword={DEFAULT_CLIENT_PASSWORD}
                   />
                 </PDFViewer>
               )}

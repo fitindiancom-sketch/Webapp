@@ -352,6 +352,47 @@ const styles = StyleSheet.create({
     lineHeight: 1.4,
   },
 
+  // ===== Page 2 — App credentials box =====
+  credentialsBox: {
+    marginTop: 12,
+    padding: 10,
+    backgroundColor: "#ecfdf5",
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: 4,
+  },
+  credentialsTitle: {
+    fontSize: 10,
+    fontWeight: 700,
+    color: COLORS.primaryDark,
+    marginBottom: 6,
+  },
+  credentialsRow: {
+    flexDirection: "row",
+    gap: 16,
+    marginBottom: 6,
+  },
+  credentialsCol: {
+    flex: 1,
+  },
+  credentialsLabel: {
+    fontSize: 8,
+    color: COLORS.muted,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginBottom: 2,
+  },
+  credentialsValue: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: COLORS.text,
+  },
+  credentialsNote: {
+    fontSize: 8,
+    color: COLORS.muted,
+    marginTop: 2,
+  },
+
   // ===== Instructions page =====
   instructionsTitle: {
     fontSize: 16,
@@ -460,6 +501,10 @@ export interface DietPlanPDFProps {
   clientMobile?: string;
   clientGender?: string;
   createdAt?: string;
+  /** App login (email or mobile-derived) shown at the bottom of page 2. */
+  clientLogin?: string;
+  /** App password shown at the bottom of page 2. Defaults to "Diet123". */
+  clientPassword?: string;
 }
 
 const splitLines = (text: string): string[] =>
@@ -483,6 +528,8 @@ export function DietPlanPDF({
   clientMobile,
   clientGender,
   createdAt,
+  clientLogin,
+  clientPassword,
 }: DietPlanPDFProps) {
   const created = createdAt ? new Date(createdAt) : new Date();
   const dateStr = created.toLocaleDateString("en-IN", {
@@ -740,6 +787,29 @@ export function DietPlanPDF({
               </Text>
             </View>
           </View>
+        </View>
+
+        {/* App login credentials — pinned at the bottom of page 2 */}
+        <View style={styles.credentialsBox} wrap={false}>
+          <Text style={styles.credentialsTitle}>NutriCare App — Login Credentials</Text>
+          <View style={styles.credentialsRow}>
+            <View style={styles.credentialsCol}>
+              <Text style={styles.credentialsLabel}>Login</Text>
+              <Text style={styles.credentialsValue}>
+                {clientLogin || "—"}
+              </Text>
+            </View>
+            <View style={styles.credentialsCol}>
+              <Text style={styles.credentialsLabel}>Password</Text>
+              <Text style={styles.credentialsValue}>
+                {clientPassword || "Diet123"}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.credentialsNote}>
+            Use these to sign in to the NutriCare app. Please change your
+            password after the first login.
+          </Text>
         </View>
 
         <View style={styles.pageFooter} fixed>
