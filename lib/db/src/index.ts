@@ -6,9 +6,9 @@ const { Pool } = pg;
 
 function pickConnectionString(): string {
   const candidates = [
-    process.env.DATABASE_URL,
     process.env.SUPABASE_PG_URL,
     process.env.SUPABASE_DATABASE_URL,
+    process.env.DATABASE_URL,
   ];
   for (const v of candidates) {
     if (v && /^postgres(ql)?:\/\//i.test(v)) return v;
