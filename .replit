@@ -1,4 +1,4 @@
-modules = ["nodejs-24"]
+modules = ["nodejs-24", "postgresql-16"]
 
 [deployment]
 router = "application"
@@ -83,4 +83,3 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-SUPABASE_PG_URL = "postgresql://postgres.inmkyvkjkfakaiyedgzk:YPjxmdzTtEGQ83xA@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require"
