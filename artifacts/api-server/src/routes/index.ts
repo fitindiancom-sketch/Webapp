@@ -9,6 +9,7 @@ import photosRouter from "./photos";
 import progressLogsRouter from "./progressLogs";
 import paymentsRouter from "./payments";
 import dashboardRouter from "./dashboard";
+import supportTeamRouter from "./supportTeam";
 import { authRouter } from "../auth";
 
 const router: IRouter = Router();
@@ -24,5 +25,6 @@ router.use(photosRouter);
 router.use(progressLogsRouter);
 router.use(paymentsRouter);
 router.use(dashboardRouter);
+router.use(supportTeamRouter);
 
 export default router;

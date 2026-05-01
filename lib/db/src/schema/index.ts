@@ -7,3 +7,4 @@ export * from "./templates";
 export * from "./photos";
 export * from "./progressLogs";
 export * from "./payments";
+export * from "./callLogs";

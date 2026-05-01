@@ -19,6 +19,7 @@ import Payments from "./pages/payments";
 import Reports from "./pages/reports";
 import Notifications from "./pages/notifications";
 import Settings from "./pages/settings";
+import SupportTeam from "./pages/support-team";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,6 +42,7 @@ function ProtectedRouter() {
         <Route path="/reports" component={Reports} />
         <Route path="/notifications" component={Notifications} />
         <Route path="/settings" component={Settings} />
+        <Route path="/support-team" component={SupportTeam} />
         <Route path="/">
           <Redirect to="/dashboard" />
         </Route>

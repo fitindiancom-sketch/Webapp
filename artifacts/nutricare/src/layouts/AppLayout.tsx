@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Users, Calendar, Utensils,
   LineChart, Users2, CreditCard, PieChart,
-  Bell, Settings, LogOut, Menu, KeyRound,
+  Bell, Settings, LogOut, Menu, KeyRound, Headset,
 } from "lucide-react";
 import { useAuth, useLogout } from "../hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ const NAV_ITEMS = [
   { path: "/staff", icon: Users2, label: "Staff" },
   { path: "/payments", icon: CreditCard, label: "Payments" },
   { path: "/reports", icon: PieChart, label: "Reports" },
+  { path: "/support-team", icon: Headset, label: "Support Team" },
   { path: "/notifications", icon: Bell, label: "Notifications" },
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
