@@ -67,6 +67,7 @@ export default defineConfig({
       process.env.NODE_ENV !== "production"
         ? {
             "Cache-Control": "no-store",
+            "X-Frame-Options": "ALLOWALL",
           }
         : undefined,
     fs: {
