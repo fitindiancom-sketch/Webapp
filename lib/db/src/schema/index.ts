@@ -8,3 +8,7 @@ export * from "./photos";
 export * from "./progressLogs";
 export * from "./payments";
 export * from "./callLogs";
+export * from "./deviceTokens";
+export * from "./photoComments";
+export * from "./waterLogs";
+export * from "./walkingLogs";

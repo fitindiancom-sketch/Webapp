@@ -166,7 +166,7 @@ router.post("/support-team/call-logs", async (req, res, next) => {
     }
     const { staffId, clientId, callStatus, callDate, durationSeconds, notes } = body.data;
 
-    const [inserted] = await db.execute(sql`
+    const result = await db.execute(sql`
       INSERT INTO call_logs (staff_id, client_id, call_status, call_date, duration_seconds, notes)
       VALUES (
         ${staffId}::uuid,
@@ -179,9 +179,9 @@ router.post("/support-team/call-logs", async (req, res, next) => {
       RETURNING *
     `);
 
-    res.status(201).json(inserted);
+    return res.status(201).json(result.rows[0]);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 });
 
@@ -219,9 +219,9 @@ router.patch("/photos/:id/review", async (req, res, next) => {
       WHERE id = ${req.params.id}::uuid
     `);
 
-    res.json({ ok: true });
+    return res.json({ ok: true });
   } catch (e) {
-    next(e);
+    return next(e);
   }
 });
 

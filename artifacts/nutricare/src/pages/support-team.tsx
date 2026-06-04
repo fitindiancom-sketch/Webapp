@@ -173,8 +173,8 @@ function LogCallDialog({
     onError: () => toast({ title: "Failed to log call", variant: "destructive" }),
   });
 
-  const handleSubmit = () => {
-    if (!form.staffId) return toast({ title: "Please select a staff member", variant: "destructive" });
+  const handleSubmit = (): void => {
+    if (!form.staffId) { toast({ title: "Please select a staff member", variant: "destructive" }); return; }
     mutation.mutate({
       staffId: form.staffId,
       callStatus: form.callStatus,

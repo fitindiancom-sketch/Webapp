@@ -1,8 +1,9 @@
 import { sql } from "drizzle-orm";
-import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, smallint, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { photoMealEnum } from "./enums";
 import { clients } from "./clients";
+import { dietPlans } from "./dietPlans";
 
 export const photos = pgTable(
   "photos",
@@ -17,6 +18,11 @@ export const photos = pgTable(
     uploadedAt: timestamp("uploaded_at", { withTimezone: true })
       .notNull()
       .default(sql`now()`),
+    dietPlanId: uuid("diet_plan_id").references(() => dietPlans.id, {
+      onDelete: "set null",
+    }),
+    dayNumber: smallint("day_number"),
+    isOnTime: boolean("is_on_time").default(true),
   },
   (t) => [
     index("idx_photos_client_id").on(t.clientId),

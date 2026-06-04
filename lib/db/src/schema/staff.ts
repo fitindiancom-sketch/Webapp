@@ -28,6 +28,8 @@ export const staff = pgTable(
     /** For role="support" only: which client channel(s) this staffer handles. */
     supportChannel: supportChannelEnum("support_channel"),
     avatarUrl: text("avatar_url"),
+    passwordHash: text("password_hash"),
+    lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .default(sql`now()`),

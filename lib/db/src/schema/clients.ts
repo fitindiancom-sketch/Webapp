@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
   customType,
   date,
@@ -60,6 +61,9 @@ export const clients = pgTable(
     planStartDate: date("plan_start_date"),
     planEndDate: date("plan_end_date"),
     lastActivityDate: date("last_activity_date"),
+    passwordHash: text("password_hash"),
+    lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    isMobileEnabled: boolean("is_mobile_enabled").default(true),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .default(sql`now()`),
