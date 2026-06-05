@@ -48,8 +48,8 @@ export async function createApp(): Promise<Express> {
   const __dirnameFe = pathModule.dirname(futp(import.meta.url));
   const frontendDist = pathModule.resolve(__dirnameFe, "../../nutricare/dist/public");
   app.use(express.static(frontendDist));
-  app.get("(.*)", (_req, res) => {
-    res.sendFile(pathModule.join(frontendDist, "index.html"));
+app.use((_req, res) => {
+  res.sendFile(pathModule.join(frontendDist, "index.html"));
   });
 
   app.use(errorHandler);
