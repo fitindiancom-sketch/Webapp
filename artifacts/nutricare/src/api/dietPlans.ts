@@ -1,25 +1,60 @@
+import { apiFetch } from "../lib/queryClient";
 import { DietPlan } from "../types";
 
-// TODO: replace with real REST/PostgreSQL calls — this signature is the contract
-let dietPlansStore: DietPlan[] = [];
+function mapRow(row: any): DietPlan {
+  return {
+    id: row.id,
+    clientId: row.clientId,
+    dietitianId: row.createdBy ?? "",
+    category: row.category ?? "New",
+    mustDo: row.mustDo ?? [],
+    waterGoal: row.waterGoalLiters ?? 2,
+    meals: row.meals ?? [],
+    createdAt: row.createdAt ?? "",
+    status: row.status ?? "active",
+  };
+}
 
 export const dietPlansApi = {
-  list: async () => new Promise<DietPlan[]>(resolve => setTimeout(() => resolve(dietPlansStore), 200)),
-  get: async (id: string) => new Promise<DietPlan | undefined>(resolve => setTimeout(() => resolve(dietPlansStore.find(dp => dp.id === id)), 200)),
-  create: async (data: Omit<DietPlan, "id">) => new Promise<DietPlan>(resolve => {
-    const newPlan = { ...data, id: `dp${Date.now()}` };
-    dietPlansStore.push(newPlan);
-    setTimeout(() => resolve(newPlan), 200);
-  }),
-  update: async (id: string, data: Partial<DietPlan>) => new Promise<DietPlan>(resolve => {
-    const index = dietPlansStore.findIndex(dp => dp.id === id);
-    if (index > -1) {
-      dietPlansStore[index] = { ...dietPlansStore[index], ...data };
-    }
-    setTimeout(() => resolve(dietPlansStore[index]), 200);
-  }),
-  remove: async (id: string) => new Promise<void>(resolve => {
-    dietPlansStore = dietPlansStore.filter(dp => dp.id !== id);
-    setTimeout(() => resolve(), 200);
-  })
+  list: async (clientId?: string): Promise<DietPlan[]> => {
+    const url = clientId ? `/api/diet-plans?clientId=${clientId}` : "/api/diet-plans";
+    const rows = await apiFetch<any[]>(url);
+    return rows.map(mapRow);
+  },
+  get: async (id: string): Promise<DietPlan | undefined> => {
+    try {
+      const row = await apiFetch<any>(`/api/diet-plans/${id}`);
+      return mapRow(row);
+    } catch { return undefined; }
+  },
+  create: async (data: Omit<DietPlan, "id">): Promise<DietPlan> => {
+    const row = await apiFetch<any>("/api/diet-plans", {
+      method: "POST",
+      body: JSON.stringify({
+        clientId: data.clientId,
+        category: data.category,
+        mustDo: data.mustDo,
+        waterGoalLiters: data.waterGoal,
+        meals: data.meals,
+        status: "active",
+      }),
+    });
+    return mapRow(row);
+  },
+  update: async (id: string, data: Partial<DietPlan>): Promise<DietPlan> => {
+    const row = await apiFetch<any>(`/api/diet-plans/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        category: data.category,
+        mustDo: data.mustDo,
+        waterGoalLiters: data.waterGoal,
+        meals: data.meals,
+        status: (data as any).status,
+      }),
+    });
+    return mapRow(row);
+  },
+  remove: async (id: string): Promise<void> => {
+    await apiFetch<void>(`/api/diet-plans/${id}`, { method: "DELETE" });
+  },
 };
