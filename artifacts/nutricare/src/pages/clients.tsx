@@ -78,7 +78,12 @@ export default function Clients() {
   const [, setLocation] = useLocation();
   const rawClients = useClientsStore((s) => s.clients);
   const addClientToStore = useClientsStore((s) => s.addClient);
+  const loadClients = useClientsStore((s) => s.loadClients);
   const { plans } = useDietPlanStore();
+
+  React.useEffect(() => {
+    loadClients();
+  }, []);
 
   const allClients = React.useMemo(
     () => rawClients.map((c) => enrichClient(c, plans)),
