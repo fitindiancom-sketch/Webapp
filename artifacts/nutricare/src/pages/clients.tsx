@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { staff } from "../mock/data";
+import { staffApi } from "../api/staff";
 import { LIFECYCLE_LABELS, LifecycleStatus, Client } from "../types";
 import { useDietPlanStore } from "../store/dietPlans";
 import { useClientsStore } from "../store/clients";
