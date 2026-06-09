@@ -16,7 +16,7 @@ import {
   buildClientLogin,
   DEFAULT_CLIENT_PASSWORD,
 } from "../lib/clientCredentials";
-import { staff } from "../mock/data";
+import { staffApi } from "../api/staff";
 import type { DietPlanTemplate } from "../types";
 import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
 import { DietPlanPDF } from "../components/DietPlanPDF";
@@ -33,7 +33,8 @@ export default function DietPlans() {
   const [step, setStep] = React.useState(1);
   const [activeView, setActiveView] = React.useState<"builder" | "templates" | "saved">("builder");
 
-  const [dietitianId, setDietitianId] = React.useState<string>("");
+const [staffList, setStaffList] = React.useState<any[]>([]);
+React.useEffect(() => { staffApi.list().then(setStaffList).catch(() => setStaffList([])); }, []);
   const [clientId, setClientId] = React.useState<string>("");
   const [category, setCategory] = React.useState<string>("New");
   const [mustDo, setMustDo] = React.useState("");
@@ -48,7 +49,7 @@ export default function DietPlans() {
   const { templates, plans, addTemplate, updateTemplate, deleteTemplate, savePlan, saveDraft, draft, clearDraft } = useDietPlanStore();
   const clients = useClientsStore((s) => s.clients);
   const attachPlan = useClientsStore((s) => s.attachPlan);
-  const dietitians = staff.filter((s) => s.role === "Dietitian");
+  const dietitians = staffList.filter((s) => s.role === "Dietitian");
 
   // Step 2: client search/filter state
   const [clientSearch, setClientSearch] = React.useState("");
@@ -123,7 +124,7 @@ export default function DietPlans() {
     }
     setClientId(client.id);
     // Auto-pick the client's assigned dietitian if they have one available
-    const assigned = staff.find(
+    const assigned = staffList.find(
       (s) => s.id === client.dietitianId && s.role === "Dietitian"
     );
     if (assigned) {
