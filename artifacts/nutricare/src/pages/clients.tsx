@@ -17,7 +17,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { staffApi } from "../api/staff";
-import { LIFECYCLE_LABELS, LifecycleStatus, Client } from "../types";
+import { clientsApi } from "../api/clients";
+import { LIFECYCLE_LABELS, LifecycleStatus, Client, Staff } from "../types";
 import { useDietPlanStore } from "../store/dietPlans";
 import { useClientsStore } from "../store/clients";
 import { enrichClient } from "../lib/clientStatus";
@@ -67,8 +68,7 @@ const EMPTY_FORM = {
   mobile: "",
   email: "",
   city: "",
-  dietitianId: "s1",
-  /** Empty string = "let the system auto-assign". */
+  dietitianId: "",
   supportStaffId: "" as string,
   registrationType: "Online" as "Online" | "Visit" | "Pune Visit",
   planType: "Standard" as "Basic" | "Standard" | "Premium" | "VIP",
@@ -80,6 +80,12 @@ export default function Clients() {
   const addClientToStore = useClientsStore((s) => s.addClient);
   const loadClients = useClientsStore((s) => s.loadClients);
   const { plans } = useDietPlanStore();
+
+  // Load real staff from database
+  const [staffList, setStaffList] = React.useState<Staff[]>([]);
+  React.useEffect(() => {
+    staffApi.list().then(setStaffList).catch(() => setStaffList([]));
+  }, []);
 
   React.useEffect(() => {
     loadClients();
@@ -97,7 +103,6 @@ export default function Clients() {
   const [planFilter, setPlanFilter] = React.useState<string>("all");
   const [dateFilter, setDateFilter] = React.useState<string>("all");
 
-  // Add Client dialog state
   const [addOpen, setAddOpen] = React.useState(false);
   const [phase, setPhase] = React.useState<"form" | "success">("form");
   const [form, setForm] = React.useState(EMPTY_FORM);
@@ -106,7 +111,7 @@ export default function Clients() {
     React.useState<CreateClientCredentialsResult | null>(null);
   const createCredentials = useCreateClientCredentials();
 
-  const dietitians = staff.filter((s) => s.role === "Dietitian");
+  const dietitians = staffList.filter((s) => s.role === "Dietitian");
   const cities = Array.from(new Set(allClients.map((c) => c.city)));
 
   const filteredClients = React.useMemo(() => {
@@ -156,7 +161,7 @@ export default function Clients() {
   };
 
   const openAddDialog = () => {
-    setForm(EMPTY_FORM);
+    setForm({ ...EMPTY_FORM, dietitianId: dietitians[0]?.id ?? "" });
     setPhase("form");
     setJustAdded(null);
     setJustCredentials(null);
@@ -168,54 +173,54 @@ export default function Clients() {
       toast.error("Please fill name, mobile, and city");
       return;
     }
-    // Resolve support staff: explicit override wins, else auto-pick by channel.
     const resolvedSupportId =
       form.supportStaffId ||
-      pickSupportStaff(form.registrationType, staff, allClients).staffId ||
+      pickSupportStaff(form.registrationType, staffList, allClients).staffId ||
       "";
-    const nextNum = 10000 + allClients.length + 1;
-    const todayIso = new Date().toISOString().slice(0, 10);
-    const newClient: Client = {
-      id: `c${Date.now()}`,
-      clientId: `NC-${nextNum}`,
-      name: form.name.trim(),
-      mobile: form.mobile.trim(),
-      email: form.email.trim() || undefined,
-      city: form.city.trim(),
-      dietitianId: form.dietitianId,
-      supportStaffId: resolvedSupportId,
-      status: "Active",
-      lifecycleStatus: "plan_not_started",
-      registrationType: form.registrationType,
-      planType: form.planType,
-      progressPercent: 0,
-      lastUpdate: todayIso,
-      lastActivityDate: todayIso,
-      renewalDate: new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10),
-      registrationDate: todayIso,
-      avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
-    };
-    addClientToStore(newClient);
-    setJustAdded(newClient);
-    setPhase("success");
-    toast.success("Client Registered Successfully");
-
-    // Auto-provision login credentials. Failure here shouldn't roll back the
-    // client registration — surface the error and let the dietitian retry.
     try {
-      const result = await createCredentials.mutateAsync({
-        name: newClient.name,
-        email: newClient.email,
-        mobile: newClient.mobile,
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const newClient = await clientsApi.create({
+        id: "",
+        clientId: "",
+        name: form.name.trim(),
+        mobile: form.mobile.trim(),
+        email: form.email.trim() || undefined,
+        city: form.city.trim(),
+        dietitianId: form.dietitianId,
+        supportStaffId: resolvedSupportId,
+        status: "Active",
+        lifecycleStatus: "plan_not_started",
+        registrationType: form.registrationType,
+        planType: form.planType,
+        progressPercent: 0,
+        lastUpdate: todayIso,
+        lastActivityDate: todayIso,
+        renewalDate: new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10),
+        registrationDate: todayIso,
+        avatar: "",
       });
-      setJustCredentials(result);
-      toast.success(
-        result.created
-          ? "Login credentials created"
-          : "Login already exists — showing existing credentials",
-      );
+      addClientToStore(newClient);
+      setJustAdded(newClient);
+      setPhase("success");
+      toast.success("Client Registered Successfully");
+
+      try {
+        const result = await createCredentials.mutateAsync({
+          name: newClient.name,
+          email: newClient.email,
+          mobile: newClient.mobile,
+        });
+        setJustCredentials(result);
+        toast.success(
+          result.created
+            ? "Login credentials created"
+            : "Login already exists — showing existing credentials",
+        );
+      } catch (err: any) {
+        toast.error(err?.message ?? "Could not create login credentials");
+      }
     } catch (err: any) {
-      toast.error(err?.message ?? "Could not create login credentials");
+      toast.error(err?.message ?? "Could not register client");
     }
   };
 
@@ -479,9 +484,13 @@ export default function Clients() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Assigned Dietitian</label>
                   <Select value={form.dietitianId} onValueChange={(v) => setForm({ ...form, dietitianId: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select dietitian" /></SelectTrigger>
                     <SelectContent>
-                      {dietitians.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}
+                      {dietitians.length === 0 ? (
+                        <SelectItem value="none" disabled>No dietitians found</SelectItem>
+                      ) : (
+                        dietitians.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -505,11 +514,11 @@ export default function Clients() {
                   {(() => {
                     const auto = pickSupportStaff(
                       form.registrationType,
-                      staff,
+                      staffList,
                       allClients,
                     );
                     const overrideStaff = form.supportStaffId
-                      ? staff.find((s) => s.id === form.supportStaffId) ?? null
+                      ? staffList.find((s) => s.id === form.supportStaffId) ?? null
                       : null;
                     const shown = overrideStaff ?? auto.staff;
                     return (
@@ -521,11 +530,9 @@ export default function Clients() {
                             </div>
                             {shown ? (
                               <div className="mt-1 flex items-center gap-2">
-                                <img
-                                  src={shown.avatar}
-                                  alt={shown.name}
-                                  className="h-7 w-7 rounded-full object-cover"
-                                />
+                                <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+                                  {shown.name[0]}
+                                </div>
                                 <div className="leading-tight">
                                   <div className="text-sm font-medium">{shown.name}</div>
                                   <div className="text-[11px] text-muted-foreground">
@@ -569,7 +576,7 @@ export default function Clients() {
                               <SelectItem value="__auto__">
                                 Auto-assign by registration type
                               </SelectItem>
-                              {staff
+                              {staffList
                                 .filter(
                                   (s) =>
                                     s.status === "Active" &&
@@ -624,20 +631,18 @@ export default function Clients() {
                 </DialogDescription>
               </DialogHeader>
               {justAdded && (() => {
-                const supportStaff = staff.find(
+                const supportStaff = staffList.find(
                   (s) => s.id === justAdded.supportStaffId,
                 );
-                const dietitianStaff = staff.find(
+                const dietitianStaff = staffList.find(
                   (s) => s.id === justAdded.dietitianId,
                 );
                 return (
                   <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-4 my-2 space-y-3">
                     <div className="flex items-center gap-3">
-                      <img
-                        src={justAdded.avatar}
-                        alt={justAdded.name}
-                        className="h-12 w-12 rounded-full object-cover"
-                      />
+                      <div className="h-12 w-12 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-800 font-bold text-lg">
+                        {justAdded.name[0]}
+                      </div>
                       <div className="flex-1">
                         <div className="font-semibold text-emerald-900">{justAdded.name}</div>
                         <div className="text-xs text-emerald-700">
@@ -650,24 +655,14 @@ export default function Clients() {
                     </div>
                     <div className="border-t border-emerald-200 pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       <div>
-                        <div className="text-[10px] uppercase tracking-wide text-emerald-700">
-                          Dietitian
-                        </div>
-                        <div className="font-medium text-emerald-900">
-                          {dietitianStaff?.name ?? "—"}
-                        </div>
+                        <div className="text-[10px] uppercase tracking-wide text-emerald-700">Dietitian</div>
+                        <div className="font-medium text-emerald-900">{dietitianStaff?.name ?? "—"}</div>
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase tracking-wide text-emerald-700">
-                          Support staff (auto-assigned)
-                        </div>
-                        <div className="font-medium text-emerald-900">
-                          {supportStaff?.name ?? "Not available"}
-                        </div>
+                        <div className="text-[10px] uppercase tracking-wide text-emerald-700">Support staff</div>
+                        <div className="font-medium text-emerald-900">{supportStaff?.name ?? "Not available"}</div>
                         {supportStaff && (
-                          <div className="text-[10px] text-emerald-700">
-                            {supportStaff.role}
-                          </div>
+                          <div className="text-[10px] text-emerald-700">{supportStaff.role}</div>
                         )}
                       </div>
                     </div>
@@ -675,87 +670,58 @@ export default function Clients() {
                 );
               })()}
 
-              {/* Auto-generated client login credentials */}
               <div className="rounded-lg border-2 border-sky-200 bg-sky-50 p-4 my-2">
                 <div className="flex items-center gap-2 mb-2">
                   <KeyRound className="h-4 w-4 text-sky-700" />
-                  <div className="font-semibold text-sky-900 text-sm">
-                    Client Login Credentials
-                  </div>
+                  <div className="font-semibold text-sky-900 text-sm">Client Login Credentials</div>
                 </div>
                 {createCredentials.isPending ? (
-                  <div className="text-xs text-sky-700">
-                    Generating login credentials…
-                  </div>
+                  <div className="text-xs text-sky-700">Generating login credentials…</div>
                 ) : justCredentials ? (
                   <div className="space-y-2">
                     {!justCredentials.created && (
                       <div className="text-[11px] text-amber-700 bg-amber-100 rounded px-2 py-1">
-                        {justCredentials.message ??
-                          "An account with this login already existed — sharing existing credentials."}
+                        {justCredentials.message ?? "An account with this login already existed."}
                       </div>
                     )}
                     <div className="grid grid-cols-1 gap-2">
                       <div>
-                        <div className="text-[10px] uppercase tracking-wide text-sky-700">
-                          Login (username)
-                        </div>
+                        <div className="text-[10px] uppercase tracking-wide text-sky-700">Login (username)</div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <code className="flex-1 text-xs bg-white border border-sky-200 rounded px-2 py-1 font-mono break-all">
                             {justCredentials.login}
                           </code>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 px-2"
-                            onClick={() =>
-                              copyToClipboard(justCredentials.login, "Login")
-                            }
-                          >
+                          <Button variant="outline" size="sm" className="h-7 px-2"
+                            onClick={() => copyToClipboard(justCredentials.login, "Login")}>
                             <Copy className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase tracking-wide text-sky-700">
-                          Password
-                        </div>
+                        <div className="text-[10px] uppercase tracking-wide text-sky-700">Password</div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <code className="flex-1 text-xs bg-white border border-sky-200 rounded px-2 py-1 font-mono">
                             {justCredentials.password}
                           </code>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 px-2"
-                            onClick={() =>
-                              copyToClipboard(
-                                justCredentials.password,
-                                "Password",
-                              )
-                            }
-                          >
+                          <Button variant="outline" size="sm" className="h-7 px-2"
+                            onClick={() => copyToClipboard(justCredentials.password, "Password")}>
                             <Copy className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
                     </div>
                     <div className="text-[11px] text-sky-700">
-                      Share these with the client. They can change the password
-                      after their first sign-in.
+                      Share these with the client. They can change the password after their first sign-in.
                     </div>
                   </div>
                 ) : (
                   <div className="text-xs text-rose-700">
-                    Could not create credentials. Please try again from the
-                    client's profile.
+                    Could not create credentials. Please try again from the client's profile.
                   </div>
                 )}
               </div>
               <DialogFooter className="gap-2">
-                <Button variant="outline" onClick={() => setAddOpen(false)}>
-                  Close
-                </Button>
+                <Button variant="outline" onClick={() => setAddOpen(false)}>Close</Button>
                 <Button variant="outline" onClick={openAddDialog}>
                   <UserPlus className="h-4 w-4 mr-1.5" /> Add Another
                 </Button>
