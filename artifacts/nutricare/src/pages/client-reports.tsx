@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { staff, photos as allPhotos, progressEntries as allProgress } from "../mock/data";
+import { staffApi } from "../api/staff";
 import { LIFECYCLE_LABELS, LifecycleStatus } from "../types";
 import { useDietPlanStore } from "../store/dietPlans";
 import { useClientsStore } from "../store/clients";
@@ -77,7 +77,16 @@ function fmtDate(iso: string): string {
   }
 }
 
-export default function ClientReports() {
+
+  export default function ClientReports() {
+  const [staff, setStaff] = React.useState<any[]>([]);
+  const [allPhotos, setAllPhotos] = React.useState<any[]>([]);
+  const [allProgress, setAllProgress] = React.useState<any[]>([]);
+  React.useEffect(() => {
+    staffApi.list().then(setStaff).catch(() => setStaff([]));
+  }, []);
+  
+  // baaki code...
   const rawClients = useClientsStore((s) => s.clients);
   const { plans } = useDietPlanStore();
 
