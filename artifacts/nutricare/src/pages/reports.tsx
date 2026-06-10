@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadialBarChart, RadialBar, Legend } from 'recharts';
 import { Download, FileText, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
-import { clients, payments, progressEntries } from "../mock/data";
+import { useClientsStore } from "../store/clients";
 
 const revenueData = [
   { name: 'Jan', value: 300000 },
@@ -47,6 +47,9 @@ const responseRate = [
 ];
 
 export default function ReportsPage() {
+  const clients = useClientsStore((s) => s.clients);
+const payments: any[] = [];
+const progressEntries: any[] = [];
   const handleCSVExport = () => {
     // Generate a simple CSV from clients mock data
     const headers = ["ID", "Name", "Mobile", "City", "Status", "Progress", "Renewal Date"];
