@@ -6,7 +6,11 @@ import {
   StyleSheet,
   Font,
 } from "@react-pdf/renderer";
-import { templates as masterTemplates } from "../mock/data";
+const masterTemplates = {
+  mustDo: ["Drink 3-4 litres of water daily", "Walk 6000-7000 steps", "Use all spices", "Drink 2 glass Lemon+Salt water"],
+  vegetables: ["Capsicum", "Cucumber", "Carrot", "Bitter gourd", "Bottle gourd", "Brinjal", "Beetroot", "Spinach", "Mushroom", "Lady finger", "Onion", "Garlic", "Ginger", "Broccoli", "Cabbage", "Cauliflower"],
+  fruits: ["Apple", "Orange", "Muskmelon", "Pomegranate", "Papaya", "Watermelon", "Guava", "Kiwi"],
+};
 
 // Try to register a clean sans-serif (falls back to Helvetica gracefully)
 try {
