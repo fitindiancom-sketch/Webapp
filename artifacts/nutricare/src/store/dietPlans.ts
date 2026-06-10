@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { DietPlanTemplate } from "../types";
-import { seedDietPlanTemplates } from "../mock/data";
 
 export interface DietPlanMeal {
   type: string;
@@ -43,7 +42,7 @@ interface DietPlanStore {
 export const useDietPlanStore = create<DietPlanStore>()(
   persist(
     (set, get) => ({
-      templates: seedDietPlanTemplates,
+      templates: [],      
       plans: [],
       draft: null,
 
