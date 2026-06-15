@@ -35,7 +35,7 @@ export const staffApi = {
         phone: data.mobile,
        role: data.role?.toLowerCase().replace(" ", "_"),
         status: data.status?.toLowerCase() ?? "active",
-       supportChannel: data.department ? data.department.toLowerCase().replace(" ", "_") : undefined,
+       supportChannel: undefined,
         avatarUrl: data.avatar || undefined,
       }),
     });
