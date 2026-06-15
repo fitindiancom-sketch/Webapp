@@ -83,7 +83,7 @@ export default function StaffPage() {
     }
 
    try {
-  await staffApi.create(newStaff as Omit<Staff, "id">);
+  await staffApi.create(newStaff as any);
   toast.success("Staff added — they can sign in with this email and password");
   setIsAddModalOpen(false);
   setNewStaff({ name: "", email: "", mobile: "", role: "Dietitian", department: "", status: "Active", joinDate: format(new Date(), "yyyy-MM-dd") });
