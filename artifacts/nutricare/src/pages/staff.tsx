@@ -82,14 +82,17 @@ export default function StaffPage() {
       return;
     }
 
-    await staffApi.create(newStaff as Omit<Staff, "id">);
-    toast.success("Staff added — they can sign in with this email and password");
-    setIsAddModalOpen(false);
-    setNewStaff({ name: "", email: "", mobile: "", role: "Dietitian", department: "", status: "Active", joinDate: format(new Date(), "yyyy-MM-dd") });
-    setPassword("");
-    setConfirmPassword("");
-    loadStaff();
-  };
+   try {
+  await staffApi.create(newStaff as Omit<Staff, "id">);
+  toast.success("Staff added — they can sign in with this email and password");
+  setIsAddModalOpen(false);
+  setNewStaff({ name: "", email: "", mobile: "", role: "Dietitian", department: "", status: "Active", joinDate: format(new Date(), "yyyy-MM-dd") });
+  setPassword("");
+  setConfirmPassword("");
+  await loadStaff();
+} catch (err) {
+  toast.error(extractApiError(err, "Could not create staff"));
+}
 
   const handlePermissionChange = (role: string, permission: string, checked: boolean) => {
     updatePermission(role, permission, checked);
