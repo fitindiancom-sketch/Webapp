@@ -35,7 +35,7 @@ export default function DietPlans() {
 
 const [staffList, setStaffList] = React.useState<any[]>([]);
 React.useEffect(() => { staffApi.list().then(setStaffList).catch(() => setStaffList([])); }, []);
-  const [clientId, setClientId] = React.useState<string>("");
+ const [dietitianId, setDietitianId] = React.useState<string>("");
   const [category, setCategory] = React.useState<string>("New");
   const [mustDo, setMustDo] = React.useState("");
   const [instructions, setInstructions] = React.useState("");
