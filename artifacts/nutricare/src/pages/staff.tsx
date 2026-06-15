@@ -92,7 +92,8 @@ export default function StaffPage() {
   await loadStaff();
 } catch (err) {
   toast.error(extractApiError(err, "Could not create staff"));
-};
+}
+  };
 
   const handlePermissionChange = (role: string, permission: string, checked: boolean) => {
     updatePermission(role, permission, checked);
