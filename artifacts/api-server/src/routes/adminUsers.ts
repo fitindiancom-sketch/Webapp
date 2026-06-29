@@ -57,5 +57,16 @@ router.post("/admin/users", async (req, res, next) => {
     next(err);
   }
 });
+router.get("/admin/staff", async (_req, res, next) => {
+  try {
+    const users = await authStorage.getAllUsers();
+    const staffUsers = users.filter((u: any) => 
+      u.role && u.role !== "client"
+    );
+    res.json(staffUsers);
+  } catch (err) {
+    next(err);
+  }
+});
 
 export default router;
