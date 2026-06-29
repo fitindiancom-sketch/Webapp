@@ -4,59 +4,57 @@ import { Staff } from "../types";
 function mapRow(row: any): Staff {
   return {
     id: row.id,
-    name: row.name,
-    role: row.role,
+    name: `${row.firstName ?? ""} ${row.lastName ?? ""}`.trim() || row.email,
+    role: row.role ?? "admin",
     email: row.email ?? "",
     mobile: row.phone ?? "",
-    status: row.status === "active" ? "Active" : "Inactive",
-    department: row.supportChannel ?? row.role ?? "",
-    joinDate: row.createdAt ?? "",
-    avatar: row.avatarUrl ?? "",
+    status: row.isActive === false ? "Inactive" : "Active",
+    department: row.role ?? "",
+    joinDate: row.createdAt ? row.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+    avatar: row.profileImageUrl ?? "",
   };
 }
 
 export const staffApi = {
   list: async (): Promise<Staff[]> => {
-    const rows = await apiFetch<any[]>("/api/staff");
+    const rows = await apiFetch<any[]>("/api/admin/staff");
     return rows.map(mapRow);
   },
   get: async (id: string): Promise<Staff | undefined> => {
     try {
-      const row = await apiFetch<any>(`/api/staff/${id}`);
-      return mapRow(row);
+      const rows = await apiFetch<any[]>("/api/admin/staff");
+      const row = rows.find((r: any) => r.id === id);
+      return row ? mapRow(row) : undefined;
     } catch { return undefined; }
   },
-  create: async (data: Omit<Staff, "id">): Promise<Staff> => {
-    const row = await apiFetch<any>("/api/staff", {
+  create: async (data: any): Promise<Staff> => {
+    const row = await apiFetch<any>("/api/admin/users", {
       method: "POST",
       body: JSON.stringify({
-        name: data.name,
         email: data.email,
+        password: data.password ?? "NutriCare@123",
+        firstName: data.name?.split(" ")[0],
+        lastName: data.name?.split(" ").slice(1).join(" ") || undefined,
+        role: data.role?.toLowerCase().replace(/ /g, "_"),
         phone: data.mobile,
-       role: data.role?.toLowerCase().replace(" ", "_"),
-        status: data.status?.toLowerCase() ?? "active",
-       supportChannel: undefined,
-        avatarUrl: data.avatar || undefined,
       }),
     });
     return mapRow(row);
   },
   update: async (id: string, data: Partial<Staff>): Promise<Staff> => {
-    const row = await apiFetch<any>(`/api/staff/${id}`, {
+    const row = await apiFetch<any>(`/api/admin/users/${id}`, {
       method: "PATCH",
       body: JSON.stringify({
-        name: data.name,
-        email: data.email,
+        firstName: data.name?.split(" ")[0],
+        lastName: data.name?.split(" ").slice(1).join(" ") || undefined,
+        role: data.role?.toLowerCase().replace(/ /g, "_"),
         phone: data.mobile,
-       role: data.role?.toLowerCase().replace(" ", "_"),
-        status: data.status?.toLowerCase(),
-        supportChannel: data.department || undefined,
-        avatarUrl: data.avatar || undefined,
+        isActive: data.status === "Active",
       }),
     });
     return mapRow(row);
   },
   remove: async (id: string): Promise<void> => {
-    await apiFetch<void>(`/api/staff/${id}`, { method: "DELETE" });
+    await apiFetch<void>(`/api/admin/users/${id}`, { method: "DELETE" });
   },
 };
