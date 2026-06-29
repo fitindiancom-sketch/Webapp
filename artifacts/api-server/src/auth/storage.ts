@@ -43,11 +43,15 @@ class AuthStorage implements IAuthStorage {
     return user;
   }
 
-  async updatePassword(id: string, passwordHash: string): Promise<void> {
+ async updatePassword(id: string, passwordHash: string): Promise<void> {
     await db
       .update(users)
       .set({ passwordHash, updatedAt: new Date() })
       .where(eq(users.id, id));
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
   }
 }
 
